@@ -1,9 +1,8 @@
 import app from "./app";
-const PORT = 5800;
 
 const handleListening = () =>
   console.log(
-    `Server is Opened: https://parkingReservation.herokuapp.com:${PORT}`
+    `Server is Opened: https://parkingReservation.herokuapp.com:${process.env.PORT}`
   );
 
-app.listen(PORT, handleListening);
+app.listen(process.env.PORT || 5800, handleListening);
