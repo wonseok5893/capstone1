@@ -12,6 +12,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var globalRouter = _express["default"].Router();
 
 var getHome = function getHome(req, res) {
+  console.log(req);
   res.send("주차장 예약 시스템에 오신 것을 환영합니다!");
 };
 

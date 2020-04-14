@@ -2,9 +2,13 @@ import express from "express";
 
 const apiRouter = express.Router();
 
-const getInfo = function (req, res) {
-  res.send("hello");
+// const findUser = function (userName) {
+//   return database.users.filter((x) => x.name === userName);
+// };
+const getUserInfo = function (req, res) {
+  console.log(req);
+  res.send("home");
 };
 
-apiRouter.get("/", getInfo);
+apiRouter.get("/", getUserInfo);
 export default apiRouter;
