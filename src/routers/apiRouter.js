@@ -6,7 +6,6 @@ const apiRouter = express.Router();
 //   return database.users.filter((x) => x.name === userName);
 // };
 const getUserInfo = function (req, res) {
-  console.log(req);
   res.send("home");
 };
 
