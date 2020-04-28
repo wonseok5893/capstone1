@@ -1,5 +1,7 @@
 "use strict";
 
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -9,14 +11,12 @@ var _mongoose = _interopRequireDefault(require("mongoose"));
 
 var _dotenv = _interopRequireDefault(require("dotenv"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
 _dotenv["default"].config(); // local 1 2 cloud
 // const localDBURL = "mongodb://localhost:27017/parkingApp";
 //cloud MONGODB_URL
 
 
-_mongoose["default"].connect(process.env.localDBURL, {
+_mongoose["default"].connect(process.env.MONGODB_LOCAL_URL, {
   useNewUrlParser: true,
   useFindAndModify: false
 });

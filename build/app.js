@@ -1,5 +1,7 @@
 "use strict";
 
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -21,7 +23,7 @@ var _globalRouter = _interopRequireDefault(require("./routers/globalRouter"));
 
 var _apiRouter = _interopRequireDefault(require("./routers/apiRouter"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+var _userRouter = _interopRequireDefault(require("./routers/userRouter"));
 
 var app = (0, _express["default"])();
 app.use((0, _helmet["default"])());
@@ -33,6 +35,7 @@ app.use(_bodyParser["default"].urlencoded({
 app.use((0, _cookieParser["default"])());
 app.use((0, _morgan["default"])("dev"));
 app.use("/", _globalRouter["default"]);
+app.use("/user", _userRouter["default"]);
 app.use("/api", _apiRouter["default"]);
 var _default = app;
 exports["default"] = _default;

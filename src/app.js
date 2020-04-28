@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import globalRouter from "./routers/globalRouter";
 import apiRouter from "./routers/apiRouter";
+import userRouter from "./routers/userRouter";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use("/", globalRouter);
+app.use("/user", userRouter);
 app.use("/api", apiRouter);
 
 export default app;

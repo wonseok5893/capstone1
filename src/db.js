@@ -4,7 +4,7 @@ dotenv.config();
 // local 1 2 cloud
 // const localDBURL = "mongodb://localhost:27017/parkingApp";
 //cloud MONGODB_URL
-mongoose.connect(process.env.MONGODB_URL, {
+mongoose.connect(process.env.MONGODB_LOCAL_URL, {
   useNewUrlParser: true,
   useFindAndModify: false,
 });
