@@ -15,34 +15,75 @@ var _express = _interopRequireDefault(require("express"));
 
 var _User = _interopRequireDefault(require("../models/User"));
 
+var _jsonwebtoken = _interopRequireDefault(require("jsonwebtoken"));
+
 var userRouter = _express["default"].Router();
 
 var postLogin = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(req, res) {
-    var _req$body, userId, userPassword, user;
+    var _req$body, userId, userPassword, secret, user;
 
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
-            _req$body = req.body, userId = _req$body.userId, userPassword = _req$body.userPassword;
-            _context.next = 3;
+            if (req.decoded) {
+              _context.next = 9;
+              break;
+            }
+
+            _req$body = req.body, userId = _req$body.userId, userPassword = _req$body.userPassword; //SERCRET
+
+            secret = req.app.get("jwt-secret");
+            _context.next = 5;
             return _User["default"].findOne({
               userId: userId
             });
 
-          case 3:
+          case 5:
             user = _context.sent;
-            console.log(user);
-            if (user.userId === userId && user.userPassword === userPassword) res.json({
-              result: "success"
-            });else {
-              res.json({
-                result: "fail"
-              });
+
+            if (user) {
+              console.log(user);
+
+              if (user.userId === userId && user.userPassword === userPassword) {
+                //토큰 발급
+                _jsonwebtoken["default"].sign({
+                  _id: user._id,
+                  userId: user.userId
+                }, secret, {
+                  expiresIn: "7d",
+                  //만료기간
+                  issuer: "parkingReservation.herokuApp.com",
+                  subject: "userInfo"
+                }, function (err, token) {
+                  if (!err) {
+                    res.json({
+                      result: "success",
+                      message: "".concat(userId, "\uB85C \uB85C\uADF8\uC778 \uC131\uACF5"),
+                      token: token
+                    });
+                  }
+                });
+              } else {
+                res.json({
+                  result: "fail",
+                  message: "로그인 실패. ID/PW를 확인해주세요"
+                });
+              }
             }
 
-          case 6:
+            _context.next = 11;
+            break;
+
+          case 9:
+            console.log(req.user);
+            res.json({
+              result: "success",
+              message: "자동 로그인 성공"
+            });
+
+          case 11:
           case "end":
             return _context.stop();
         }

@@ -25,6 +25,12 @@ var _apiRouter = _interopRequireDefault(require("./routers/apiRouter"));
 
 var _userRouter = _interopRequireDefault(require("./routers/userRouter"));
 
+var _dotenv = _interopRequireDefault(require("dotenv"));
+
+var _jwtMiddleware = require("./jwtMiddleware");
+
+_dotenv["default"].config();
+
 var app = (0, _express["default"])();
 app.use((0, _helmet["default"])());
 app.set("/", _path["default"].join(__dirname, "/"));
@@ -34,6 +40,8 @@ app.use(_bodyParser["default"].urlencoded({
 }));
 app.use((0, _cookieParser["default"])());
 app.use((0, _morgan["default"])("dev"));
+app.set("jwt-secret", process.env.SECRET);
+app.use(_jwtMiddleware.jwtMiddleware);
 app.use("/", _globalRouter["default"]);
 app.use("/user", _userRouter["default"]);
 app.use("/api", _apiRouter["default"]);

@@ -1,19 +1,52 @@
 import express from "express";
 import User from "../models/User";
+import jwt from "jsonwebtoken";
 
 const userRouter = express.Router();
 
 export const postLogin = async (req, res) => {
-  const {
-    body: { userId, userPassword },
-  } = req;
-  const user = await User.findOne({ userId });
-
-  console.log(user);
-  if (user.userId === userId && user.userPassword === userPassword)
-    res.json({ result: "success" });
-  else {
-    res.json({ result: "fail" });
+  if (!req.decoded) {
+    const {
+      body: { userId, userPassword },
+    } = req;
+    //SERCRET
+    const secret = req.app.get("jwt-secret");
+    const user = await User.findOne({ userId });
+    if (user) {
+      console.log(user);
+      if (user.userId === userId && user.userPassword === userPassword) {
+        //토큰 발급
+        jwt.sign(
+          {
+            _id: user._id,
+            userId: user.userId,
+          },
+          secret,
+          {
+            expiresIn: "7d", //만료기간
+            issuer: "parkingReservation.herokuApp.com",
+            subject: "userInfo",
+          },
+          (err, token) => {
+            if (!err) {
+              res.json({
+                result: "success",
+                message: `${userId}로 로그인 성공`,
+                token,
+              });
+            }
+          }
+        );
+      } else {
+        res.json({
+          result: "fail",
+          message: "로그인 실패. ID/PW를 확인해주세요",
+        });
+      }
+    }
+  } else {
+    console.log(req.user);
+    res.json({ result: "success", message: "자동 로그인 성공" });
   }
 };
 
