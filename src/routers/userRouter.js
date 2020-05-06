@@ -53,28 +53,33 @@ export const postLogin = async (req, res) => {
 export const postJoin = async (req, res) => {
   console.log(req);
   const {
-    body: { userId, userPassword, userEmail, userPhone },
+    body: {
+      userId,
+      userPassword,
+      userName,
+      userEmail,
+      userPhone,
+      userCarNumber,
+    },
   } = req;
-  if (
-    userId == null ||
-    userPassword == null ||
-    userEmail == null ||
-    userPhone == null
-  ) {
-    res.json({ result: "fail" });
+  const user = User.findOne({ userId });
+  if (user.userId) {
+    res.json({ result: "fail", mmessage: "이미 존재하는 ID가 있습니다." });
   } else {
     try {
       const user = await User({
         userId,
         userPassword,
+        userName,
         userEmail,
         userPhone,
+        userCarNumber,
       });
       await User.create(user);
-      res.json({ result: "success" });
+      res.json({ result: "success", message: "회원가입 성공" });
     } catch (error) {
       console.log(error);
-      res.json({ result: "fail" });
+      res.json({ result: "fail", message: "이미 존재하는 ID가 있습니다." });
     }
   }
 };

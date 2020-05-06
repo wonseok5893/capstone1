@@ -100,62 +100,70 @@ exports.postLogin = postLogin;
 
 var postJoin = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body2, userId, userPassword, userEmail, userPhone, user;
+    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userCarNumber, user, _user;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             console.log(req);
-            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone;
+            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone, userCarNumber = _req$body2.userCarNumber;
+            user = _User["default"].findOne({
+              userId: userId
+            });
 
-            if (!(userId == null || userPassword == null || userEmail == null || userPhone == null)) {
-              _context2.next = 6;
+            if (!user.userId) {
+              _context2.next = 7;
               break;
             }
 
             res.json({
-              result: "fail"
+              result: "fail",
+              mmessage: "이미 존재하는 ID가 있습니다."
             });
-            _context2.next = 19;
+            _context2.next = 20;
             break;
 
-          case 6:
-            _context2.prev = 6;
-            _context2.next = 9;
+          case 7:
+            _context2.prev = 7;
+            _context2.next = 10;
             return (0, _User["default"])({
               userId: userId,
               userPassword: userPassword,
+              userName: userName,
               userEmail: userEmail,
-              userPhone: userPhone
+              userPhone: userPhone,
+              userCarNumber: userCarNumber
             });
 
-          case 9:
-            user = _context2.sent;
-            _context2.next = 12;
-            return _User["default"].create(user);
+          case 10:
+            _user = _context2.sent;
+            _context2.next = 13;
+            return _User["default"].create(_user);
 
-          case 12:
+          case 13:
             res.json({
-              result: "success"
+              result: "success",
+              message: "회원가입 성공"
             });
-            _context2.next = 19;
+            _context2.next = 20;
             break;
 
-          case 15:
-            _context2.prev = 15;
-            _context2.t0 = _context2["catch"](6);
+          case 16:
+            _context2.prev = 16;
+            _context2.t0 = _context2["catch"](7);
             console.log(_context2.t0);
             res.json({
-              result: "fail"
+              result: "fail",
+              message: "이미 존재하는 ID가 있습니다."
             });
 
-          case 19:
+          case 20:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[6, 15]]);
+    }, _callee2, null, [[7, 16]]);
   }));
 
   return function postJoin(_x3, _x4) {
