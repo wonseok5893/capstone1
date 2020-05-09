@@ -100,7 +100,7 @@ exports.postLogin = postLogin;
 
 var postJoin = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userCarNumber, user, _user;
+    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userCarNumber, userIdCheck, user;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
@@ -108,25 +108,29 @@ var postJoin = /*#__PURE__*/function () {
           case 0:
             console.log(req);
             _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone, userCarNumber = _req$body2.userCarNumber;
-            user = _User["default"].findOne({
+            _context2.prev = 2;
+            _context2.next = 5;
+            return _User["default"].findOne({
               userId: userId
             });
 
-            if (!user.userId) {
-              _context2.next = 7;
+          case 5:
+            userIdCheck = _context2.sent;
+
+            if (!(userIdCheck !== null)) {
+              _context2.next = 10;
               break;
             }
 
             res.json({
               result: "fail",
-              mmessage: "이미 존재하는 ID가 있습니다."
+              message: "이미 존재하는 ID가 있습니다."
             });
-            _context2.next = 20;
+            _context2.next = 16;
             break;
 
-          case 7:
-            _context2.prev = 7;
-            _context2.next = 10;
+          case 10:
+            _context2.next = 12;
             return (0, _User["default"])({
               userId: userId,
               userPassword: userPassword,
@@ -136,34 +140,36 @@ var postJoin = /*#__PURE__*/function () {
               userCarNumber: userCarNumber
             });
 
-          case 10:
-            _user = _context2.sent;
-            _context2.next = 13;
-            return _User["default"].create(_user);
+          case 12:
+            user = _context2.sent;
+            _context2.next = 15;
+            return _User["default"].create(user);
 
-          case 13:
+          case 15:
             res.json({
               result: "success",
               message: "회원가입 성공"
             });
-            _context2.next = 20;
-            break;
 
           case 16:
-            _context2.prev = 16;
-            _context2.t0 = _context2["catch"](7);
+            _context2.next = 22;
+            break;
+
+          case 18:
+            _context2.prev = 18;
+            _context2.t0 = _context2["catch"](2);
             console.log(_context2.t0);
             res.json({
               result: "fail",
-              message: "이미 존재하는 ID가 있습니다."
+              message: "DB 오류"
             });
 
-          case 20:
+          case 22:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[7, 16]]);
+    }, _callee2, null, [[2, 18]]);
   }));
 
   return function postJoin(_x3, _x4) {
@@ -177,8 +183,78 @@ var getJoin = function getJoin(req, res) {
   res.send("회원가입 페이지입니다!");
 };
 
+var changePassword = /*#__PURE__*/function () {
+  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(req, res) {
+    var userId, _req$body3, beforeUserPassword, newUserPassword, user;
+
+    return _regenerator["default"].wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            userId = req.decoded.userId;
+            _req$body3 = req.body, beforeUserPassword = _req$body3.userPassword, newUserPassword = _req$body3.newUserPassword;
+            console.log(beforeUserPassword, newUserPassword);
+            _context3.prev = 3;
+            _context3.next = 6;
+            return _User["default"].findOne({
+              userId: userId
+            });
+
+          case 6:
+            user = _context3.sent;
+
+            if (beforeUserPassword === user.userPassword) {
+              user.userPassword = newUserPassword;
+              user.save(function (err) {
+                if (err) res.json({
+                  result: "fail",
+                  message: "db 저장 실패"
+                });else {
+                  res.json({
+                    result: "success",
+                    message: "비밀번호를 변경하였습니다."
+                  });
+                }
+              });
+            } else {
+              res.json({
+                result: "fail",
+                message: "이전 비밀번호를 확인해주세요."
+              });
+            }
+
+            _context3.next = 14;
+            break;
+
+          case 10:
+            _context3.prev = 10;
+            _context3.t0 = _context3["catch"](3);
+            res.json({
+              result: "fail",
+              message: "해당하는 유저가 없습니다."
+            });
+            console.log(_context3.t0);
+
+          case 14:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3, null, [[3, 10]]);
+  }));
+
+  return function changePassword(_x5, _x6) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+var changePhone = function changePhone(req, res) {};
+
+var changeId = function changeId(req, res) {};
+
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
+userRouter.post("/editPassword", changePassword);
 var _default = userRouter;
 exports["default"] = _default;

@@ -10,7 +10,6 @@ export const jwtMiddleware = async (req, res, next) => {
     await jwt.verify(token, process.env.SECRET, (err, decoded) => {
       if (!err) {
         req.decoded = decoded;
-
         console.log("세션 로그인 성공");
         next();
       } else {
