@@ -49,12 +49,23 @@ var getUserInfo = /*#__PURE__*/function () {
             _context.next = 7;
             return _User["default"].findOne({
               userId: req.decoded.userId
-            }).populate("sharingParkingLot").exec(function (err, data) {
+            }).select("userId userName userEmail userPhone userCarNumber point state").populate({
+              path: "sharingParkingLot",
+              select: "latitude longitude state"
+            }).exec(function (err, data) {
               if (err) console.log(err);else {
-                res.json({
-                  result: "success",
-                  user: data
-                });
+                if (data) {
+                  console.log("토큰 인중 후 ", data);
+                  res.json({
+                    result: "success",
+                    user: data
+                  });
+                } else {
+                  res.json({
+                    result: "fail",
+                    message: "다시 로그인 해주세요"
+                  });
+                }
               }
             });
 
@@ -90,9 +101,10 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
 
           case 4:
             user = _context2.sent;
+            console.log("TEST", user.sharingParkingLot);
 
-            if (!(user.sharedLocation !== null)) {
-              _context2.next = 9;
+            if (!user.sharingParkingLot) {
+              _context2.next = 10;
               break;
             }
 
@@ -100,12 +112,12 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               result: "fail",
               message: "등록된 공유 주차장이 있습니다."
             });
-            _context2.next = 24;
+            _context2.next = 25;
             break;
 
-          case 9:
-            _context2.prev = 9;
-            _context2.next = 12;
+          case 10:
+            _context2.prev = 10;
+            _context2.next = 13;
             return (0, _SharedLocation["default"])({
               owner: req.decoded._id,
               latitude: latitude,
@@ -113,12 +125,12 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               price: price
             });
 
-          case 12:
+          case 13:
             sharedLocation = _context2.sent;
-            _context2.next = 15;
+            _context2.next = 16;
             return _SharedLocation["default"].create(sharedLocation);
 
-          case 15:
+          case 16:
             console.log(sharedLocation);
             user.sharingParkingLot = sharedLocation._id;
             user.save(function (err) {
@@ -133,24 +145,24 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
                 });
               }
             });
-            _context2.next = 24;
+            _context2.next = 25;
             break;
 
-          case 20:
-            _context2.prev = 20;
-            _context2.t0 = _context2["catch"](9);
+          case 21:
+            _context2.prev = 21;
+            _context2.t0 = _context2["catch"](10);
             console.log(_context2.t0);
             res.json({
               result: "fail",
               message: "배정자 등록 실패"
             });
 
-          case 24:
+          case 25:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[9, 20]]);
+    }, _callee2, null, [[10, 21]]);
   }));
 
   return function sharedLocationEnroll(_x3, _x4) {
@@ -168,40 +180,54 @@ var reservationEnroll = /*#__PURE__*/function () {
           case 0:
             console.log("예약 등록 요청", req);
             _req$body2 = req.body, startTime = _req$body2.startTime, endTime = _req$body2.endTime, sum = _req$body2.sum;
-            _context3.prev = 2;
-            _context3.next = 5;
+
+            if (req.decoded) {
+              _context3.next = 6;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "잘못된 접근입니다."
+            });
+            _context3.next = 30;
+            break;
+
+          case 6:
+            _context3.prev = 6;
+            _context3.next = 9;
             return (0, _Reservation["default"])({
               startTime: startTime,
               endTime: endTime,
               sum: sum
             });
 
-          case 5:
+          case 9:
             _reservation = _context3.sent;
-            _context3.next = 8;
+            _context3.next = 12;
             return _Reservation["default"].create(_reservation);
 
-          case 8:
-            _context3.next = 14;
+          case 12:
+            _context3.next = 18;
             break;
 
-          case 10:
-            _context3.prev = 10;
-            _context3.t0 = _context3["catch"](2);
+          case 14:
+            _context3.prev = 14;
+            _context3.t0 = _context3["catch"](6);
             console.log(_context3.t0);
             res.json({
               result: "fail",
               message: "예약 DB ERROR"
             });
 
-          case 14:
-            _context3.prev = 14;
-            _context3.next = 17;
+          case 18:
+            _context3.prev = 18;
+            _context3.next = 21;
             return _User["default"].findOne({
               userId: req.decoded.userId
             });
 
-          case 17:
+          case 21:
             user = _context3.sent;
             user.reservation.push(reservation);
             user.save(function (err) {
@@ -219,24 +245,24 @@ var reservationEnroll = /*#__PURE__*/function () {
                 });
               }
             });
-            _context3.next = 26;
+            _context3.next = 30;
             break;
 
-          case 22:
-            _context3.prev = 22;
-            _context3.t1 = _context3["catch"](14);
+          case 26:
+            _context3.prev = 26;
+            _context3.t1 = _context3["catch"](18);
             console.log(_context3.t1);
             res.json({
               result: "fail",
               message: "사용자 등록 DB ERROR"
             });
 
-          case 26:
+          case 30:
           case "end":
             return _context3.stop();
         }
       }
-    }, _callee3, null, [[2, 10], [14, 22]]);
+    }, _callee3, null, [[6, 14], [18, 26]]);
   }));
 
   return function reservationEnroll(_x5, _x6) {
@@ -244,9 +270,44 @@ var reservationEnroll = /*#__PURE__*/function () {
   };
 }();
 
+var timeParse = function timeParse(time) {
+  console.log(time);
+};
+
+var getLocation = /*#__PURE__*/function () {
+  var _ref4 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(req, res) {
+    var apiURL;
+    return _regenerator["default"].wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            console.log(req);
+            apiURL = "https://openapi.naver.com/v1/map/geocode?query=" + req.query;
+            console.log(apiURL);
+
+          case 3:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+
+  return function getLocation(_x7, _x8) {
+    return _ref4.apply(this, arguments);
+  };
+}();
+
+var getAddress = function getAddress(req, res) {
+  console.log(req);
+  res.render("getAddress");
+};
+
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/car");
+apiRouter.get("/getLocation", getLocation);
+apiRouter.get("/getAddress", getAddress);
 var _default = apiRouter;
 exports["default"] = _default;

@@ -8,12 +8,17 @@ import globalRouter from "./routers/globalRouter";
 import apiRouter from "./routers/apiRouter";
 import userRouter from "./routers/userRouter";
 import dotenv from "dotenv";
+import multerMiddleware from "./multerMiddleware";
 import { jwtMiddleware } from "./jwtMiddleware";
+import multer from "multer";
 dotenv.config();
 
 const app = express();
 
 app.use(helmet());
+app.set("views", path.join(__dirname, "../src/views"));
+app.set("view engine", "ejs");
+app.engine("html", require("ejs").renderFile);
 app.set("/", path.join(__dirname, "/"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

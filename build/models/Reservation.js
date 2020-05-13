@@ -18,7 +18,6 @@ var ReservationSchema = new _mongoose["default"].Schema({
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "User"
   },
-  reservationId: _mongoose["default"].Schema.Types.ObjectId,
   location: {
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "SharedLocation"
@@ -37,11 +36,12 @@ var ReservationSchema = new _mongoose["default"].Schema({
     "enum": [-1, 0, 1],
     "default": 0
   },
-  //-1 지난예약, 0 , 1 예약상태
+  //-1 지난예약/ 0 관리자 승인시 까지 보류중/ , 1/ 예약상태
   reservationTime: {
     type: Date,
     "default": Date.now
-  }
+  },
+  id: _mongoose["default"].Schema.Types.ObjectId
 });
 
 var model = _mongoose["default"].model("Reservation", ReservationSchema);

@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 const SharedLocationSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  reservationList: { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" },
+  reservationList: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" },
+  ],
   latitude: { type: String },
   longitude: { type: String },
   price: { type: Number },

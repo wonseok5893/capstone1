@@ -27,12 +27,19 @@ var _userRouter = _interopRequireDefault(require("./routers/userRouter"));
 
 var _dotenv = _interopRequireDefault(require("dotenv"));
 
+var _multerMiddleware = _interopRequireDefault(require("./multerMiddleware"));
+
 var _jwtMiddleware = require("./jwtMiddleware");
+
+var _multer = _interopRequireDefault(require("multer"));
 
 _dotenv["default"].config();
 
 var app = (0, _express["default"])();
 app.use((0, _helmet["default"])());
+app.set("views", _path["default"].join(__dirname, "../src/views"));
+app.set("view engine", "ejs");
+app.engine("html", require("ejs").renderFile);
 app.set("/", _path["default"].join(__dirname, "/"));
 app.use(_bodyParser["default"].json());
 app.use(_bodyParser["default"].urlencoded({

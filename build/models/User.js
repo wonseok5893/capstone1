@@ -39,7 +39,6 @@ var UserSchema = new _mongoose["default"].Schema({
   },
   userCarNumber: {
     type: String,
-    required: true,
     trim: true
   },
   created: {
@@ -48,8 +47,7 @@ var UserSchema = new _mongoose["default"].Schema({
   },
   point: {
     type: Number,
-    "default": 0,
-    index: true
+    "default": 0
   },
   reservation: [{
     type: _mongoose["default"].Schema.Types.ObjectId,
@@ -58,6 +56,11 @@ var UserSchema = new _mongoose["default"].Schema({
   sharingParkingLot: {
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "SharedLocation"
+  },
+  state: {
+    type: Number,
+    "default": 0,
+    "enum": [0, 1]
   },
   id: _mongoose["default"].Schema.Types.ObjectId
 });

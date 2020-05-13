@@ -29,6 +29,7 @@ export const postLogin = async (req, res) => {
           },
           (err, token) => {
             if (!err) {
+              console.log("로그인 성공");
               res.json({
                 result: "success",
                 message: `${userId}로 로그인 성공`,
@@ -53,14 +54,7 @@ export const postLogin = async (req, res) => {
 export const postJoin = async (req, res) => {
   console.log(req);
   const {
-    body: {
-      userId,
-      userPassword,
-      userName,
-      userEmail,
-      userPhone,
-      userCarNumber,
-    },
+    body: { userId, userPassword, userName, userEmail, userPhone },
   } = req;
   try {
     const userIdCheck = await User.findOne({ userId });
@@ -74,7 +68,6 @@ export const postJoin = async (req, res) => {
         userName,
         userEmail,
         userPhone,
-        userCarNumber,
       });
       await User.create(user);
       res.json({ result: "success", message: "회원가입 성공" });
@@ -89,6 +82,7 @@ const getJoin = function (req, res) {
 };
 
 const changePassword = async function (req, res) {
+  console.log("비밀번호 변경 요청", req);
   const userId = req.decoded.userId;
   const {
     body: { userPassword: beforeUserPassword, newUserPassword },

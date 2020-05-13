@@ -14,10 +14,10 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "User"
   },
-  reservationList: {
+  reservationList: [{
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "Reservation"
-  },
+  }],
   latitude: {
     type: String
   },

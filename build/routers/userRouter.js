@@ -58,6 +58,7 @@ var postLogin = /*#__PURE__*/function () {
                   subject: "userInfo"
                 }, function (err, token) {
                   if (!err) {
+                    console.log("로그인 성공");
                     res.json({
                       result: "success",
                       message: "".concat(userId, "\uB85C \uB85C\uADF8\uC778 \uC131\uACF5"),
@@ -100,14 +101,14 @@ exports.postLogin = postLogin;
 
 var postJoin = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userCarNumber, userIdCheck, user;
+    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userIdCheck, user;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             console.log(req);
-            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone, userCarNumber = _req$body2.userCarNumber;
+            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone;
             _context2.prev = 2;
             _context2.next = 5;
             return _User["default"].findOne({
@@ -136,8 +137,7 @@ var postJoin = /*#__PURE__*/function () {
               userPassword: userPassword,
               userName: userName,
               userEmail: userEmail,
-              userPhone: userPhone,
-              userCarNumber: userCarNumber
+              userPhone: userPhone
             });
 
           case 12:
@@ -191,16 +191,17 @@ var changePassword = /*#__PURE__*/function () {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
+            console.log("비밀번호 변경 요청", req);
             userId = req.decoded.userId;
             _req$body3 = req.body, beforeUserPassword = _req$body3.userPassword, newUserPassword = _req$body3.newUserPassword;
             console.log(beforeUserPassword, newUserPassword);
-            _context3.prev = 3;
-            _context3.next = 6;
+            _context3.prev = 4;
+            _context3.next = 7;
             return _User["default"].findOne({
               userId: userId
             });
 
-          case 6:
+          case 7:
             user = _context3.sent;
 
             if (beforeUserPassword === user.userPassword) {
@@ -223,24 +224,24 @@ var changePassword = /*#__PURE__*/function () {
               });
             }
 
-            _context3.next = 14;
+            _context3.next = 15;
             break;
 
-          case 10:
-            _context3.prev = 10;
-            _context3.t0 = _context3["catch"](3);
+          case 11:
+            _context3.prev = 11;
+            _context3.t0 = _context3["catch"](4);
             res.json({
               result: "fail",
               message: "해당하는 유저가 없습니다."
             });
             console.log(_context3.t0);
 
-          case 14:
+          case 15:
           case "end":
             return _context3.stop();
         }
       }
-    }, _callee3, null, [[3, 10]]);
+    }, _callee3, null, [[4, 11]]);
   }));
 
   return function changePassword(_x5, _x6) {
