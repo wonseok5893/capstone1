@@ -3,6 +3,7 @@ import User from "../models/User";
 import SharedLocation from "../models/SharedLocation";
 import userRouter from "./userRouter";
 import Reservation from "../models/Reservation";
+import { uploadImage } from "../multerMiddleware";
 
 const apiRouter = express.Router();
 
@@ -44,39 +45,63 @@ export const getUserInfo = async function (req, res) {
 const sharedLocationEnroll = async (req, res) => {
   console.log("배정자 등록 요청", req);
   const {
-    body: { latitude, longitude, price },
+    body: {
+      userBirth,
+      userCarNumber,
+      location,
+      latitude,
+      longitude,
+      parkingInfo,
+    },
   } = req;
-  if (!req.decoded) {
-    res.json({ result: "fail", message: "잘못된 접근입니다" });
+  if (!req.file) {
+    res.json({
+      result: "fail",
+      message: "이미지 파일이 정상적으로 업로드 되지 않았습니다.",
+    });
   } else {
-    const user = await User.findOne({ userId: req.decoded.userId });
-    console.log("TEST", user.sharingParkingLot);
-    if (user.sharingParkingLot) {
-      res.json({ result: "fail", message: "등록된 공유 주차장이 있습니다." });
+    if (!req.decoded) {
+      res.json({ result: "fail", message: "잘못된 접근입니다" });
+      fs.unlink(
+        path.join(__dirname, `../../uploads/images/${req.file.filename}`),
+        (err) => {
+          if (err) throw err;
+          console.log(
+            "잘못된 접근으로 만들어진",
+            req.file.filename,
+            "을 지웠습니다"
+          );
+        }
+      );
     } else {
-      try {
-        const sharedLocation = await SharedLocation({
-          owner: req.decoded._id,
-          latitude,
-          longitude,
-          price,
-        });
+      const user = await User.findOne({ userId: req.decoded.userId });
+      console.log("TEST", user.sharingParkingLot);
+      if (user.sharingParkingLot) {
+        res.json({ result: "fail", message: "등록된 공유 주차장이 있습니다." });
+      } else {
+        try {
+          const sharedLocation = await SharedLocation({
+            owner: req.decoded._id,
+            filePath: req.file.path,
+            userCarNumber,
+            userBirth,
+            location,
+            latitude,
+            longitude,
+            parkingInfo,
+          });
 
-        await SharedLocation.create(sharedLocation);
-        console.log(sharedLocation);
-        user.sharingParkingLot = sharedLocation._id;
-        user.save(function (err) {
-          if (err) res.json({ result: "fail", message: "db 저장 실패" });
-          else {
-            res.json({
-              result: "success",
-              message: "배정자 (임시) 등록에 성공하였습니다.", //관리자가 승인해주면 등록 안해주면 배정자 삭제 User parkingLot만 관리하면댐
-            });
-          }
-        });
-      } catch (err) {
-        console.log(err);
-        res.json({ result: "fail", message: "배정자 등록 실패" });
+          await SharedLocation.create(sharedLocation);
+          console.log(sharedLocation);
+          console.log("배정자 등록 신청이 완료 되었습니다.");
+          res.json({
+            result: "success",
+            message: "배정자 등록 신청이 완료되었습니다.",
+          });
+        } catch (err) {
+          console.log(err);
+          res.json({ result: "fail", message: "배정자 등록 신청 실패" });
+        }
       }
     }
   }
@@ -130,10 +155,11 @@ const getAddress = (req, res) => {
   res.render("getAddress");
 };
 apiRouter.post("/auth", getUserInfo);
-apiRouter.post("/sharedLocation/enroll", sharedLocationEnroll);
+apiRouter.post("/sharedLocation/enroll", uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/car");
 apiRouter.get("/getLocation", getLocation);
 apiRouter.get("/getAddress", getAddress);
+apiRouter.get("/getLocation", getLocation);
 
 export default apiRouter;

@@ -17,6 +17,8 @@ var _userRouter = _interopRequireDefault(require("./userRouter"));
 
 var _User = _interopRequireDefault(require("../models/User"));
 
+var _SharedLocation = _interopRequireDefault(require("../models/SharedLocation"));
+
 var _Image = _interopRequireDefault(require("../models/Image"));
 
 var _multerMiddleware = require("../multerMiddleware");
@@ -119,7 +121,7 @@ var uploadTest = /*#__PURE__*/function () {
               console.log("잘못된 접근으로 만들어진", req.file.filename, "을 지웠습니다");
             });
 
-            _context2.next = 23;
+            _context2.next = 24;
             break;
 
           case 5:
@@ -130,53 +132,118 @@ var uploadTest = /*#__PURE__*/function () {
 
             res.json({
               result: "fail",
-              message: "파일 전송 요청 오류"
+              message: "이미지 오류"
             });
-            _context2.next = 23;
+            _context2.next = 24;
             break;
 
           case 9:
+            console.log(req);
             console.log(req.file);
-            _context2.next = 12;
+            _context2.next = 13;
             return (0, _Image["default"])({
               owner: req.decoded._id,
               fileName: req.file.filename,
               filePath: req.file.path
             });
 
-          case 12:
+          case 13:
             image = _context2.sent;
-            _context2.prev = 13;
-            _context2.next = 16;
+            _context2.prev = 14;
+            _context2.next = 17;
             return _Image["default"].create(image);
 
-          case 16:
+          case 17:
             res.json({
               result: "success",
               message: "성공적으로 이미지를 업로드 하였습니다."
             });
-            _context2.next = 23;
+            _context2.next = 24;
             break;
 
-          case 19:
-            _context2.prev = 19;
-            _context2.t0 = _context2["catch"](13);
+          case 20:
+            _context2.prev = 20;
+            _context2.t0 = _context2["catch"](14);
             console.log(_context2.t0);
             res.json({
               result: "fail",
               message: "DB 오류"
             });
 
-          case 23:
+          case 24:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[13, 19]]);
+    }, _callee2, null, [[14, 20]]);
   }));
 
   return function uploadTest(_x3, _x4) {
     return _ref2.apply(this, arguments);
+  };
+}();
+
+var checkSharedLocation = /*#__PURE__*/function () {
+  var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(req, res) {
+    var admin;
+    return _regenerator["default"].wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            _context3.next = 2;
+            return _User["default"].findOne({
+              userId: req.decoded.userId
+            });
+
+          case 2:
+            admin = _context3.sent;
+
+            if (admin.state != 1) {
+              res.json({
+                result: "fail",
+                message: "잘못된 접근입니다."
+              });
+            } else {}
+
+          case 4:
+          case "end":
+            return _context3.stop();
+        }
+      }
+    }, _callee3);
+  }));
+
+  return function checkSharedLocation(_x5, _x6) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+
+var unCheckedSharedLocation = /*#__PURE__*/function () {
+  var _ref4 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(req, res) {
+    var unCheckedList;
+    return _regenerator["default"].wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            _context4.next = 2;
+            return _SharedLocation["default"].find({
+              state: 0
+            });
+
+          case 2:
+            unCheckedList = _context4.sent;
+            console.log(unCheckedList);
+
+          case 4:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4);
+  }));
+
+  return function unCheckedSharedLocation(_x7, _x8) {
+    return _ref4.apply(this, arguments);
   };
 }();
 
@@ -186,5 +253,6 @@ globalRouter.get("/upload", function (req, res) {
 });
 globalRouter.post("/upload", _multerMiddleware.uploadImage, uploadTest);
 globalRouter.post("/admin/users", getAllusers);
+globalRouter.post("/admin/sharedLocation/enroll", checkSharedLocation);
 var _default = globalRouter;
 exports["default"] = _default;

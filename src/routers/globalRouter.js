@@ -1,6 +1,7 @@
 import express from "express";
 import userRouter from "./userRouter";
 import User from "../models/User";
+import SharedLocation from "../models/SharedLocation";
 import Image from "../models/Image";
 import { uploadImage } from "../multerMiddleware";
 import fs from "fs";
@@ -41,8 +42,9 @@ const uploadTest = async (req, res) => {
     );
   } else {
     if (!req.file) {
-      res.json({ result: "fail", message: "파일 전송 요청 오류" });
+      res.json({ result: "fail", message: "이미지 오류" });
     } else {
+      console.log(req);
       console.log(req.file);
       const image = await Image({
         owner: req.decoded._id,
@@ -62,10 +64,23 @@ const uploadTest = async (req, res) => {
     }
   }
 };
+const checkSharedLocation = async (req, res) => {
+  const admin = await User.findOne({ userId: req.decoded.userId });
+  if (admin.state != 1) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+  }
+};
+const unCheckedSharedLocation = async (req, res) => {
+  const unCheckedList = await SharedLocation.find({ state: 0 });
+  console.log(unCheckedList);
+};
 globalRouter.get("/", getHome);
 globalRouter.get("/upload", (req, res) => {
   res.render("uploadTest");
 });
 globalRouter.post("/upload", uploadImage, uploadTest);
 globalRouter.post("/admin/users", getAllusers);
+globalRouter.post("/admin/sharedLocation/enroll", checkSharedLocation);
+
 export default globalRouter;

@@ -5,10 +5,14 @@ const SharedLocationSchema = new mongoose.Schema({
   reservationList: [
     { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" },
   ],
-  latitude: { type: String },
-  longitude: { type: String },
-  price: { type: Number },
+  userCarNumber: { type: String, required: true },
+  userBirth: { type: String, required: true },
+  location: { type: String, required: true },
+  latitude: { type: String, required: true },
+  longitude: { type: String, required: true },
   state: { type: Number, default: 0, enum: [0, 1] },
+  filePath: { type: String, required: true },
+  parkingInfo: { type: String, required: true },
   enrollTime: { type: Date, default: Date.now },
 });
 

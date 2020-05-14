@@ -9,10 +9,8 @@ const multerImage = multer({
     filename: function (req, file, cb) {
       cb(
         null,
-        req.decoded.userId +
-          "_" +
-          new Date().valueOf() +
-          path.extname(file.originalname)
+
+        new Date().valueOf() + path.extname(file.originalname)
       );
     },
   }),

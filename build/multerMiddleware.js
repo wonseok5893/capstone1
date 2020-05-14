@@ -17,7 +17,7 @@ var multerImage = (0, _multer["default"])({
       cb(null, "uploads/images/");
     },
     filename: function filename(req, file, cb) {
-      cb(null, req.decoded.userId + "_" + new Date().valueOf() + _path["default"].extname(file.originalname));
+      cb(null, new Date().valueOf() + _path["default"].extname(file.originalname));
     }
   })
 });

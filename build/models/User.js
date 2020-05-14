@@ -32,6 +32,9 @@ var UserSchema = new _mongoose["default"].Schema({
     required: true,
     trim: true
   },
+  userBirth: {
+    type: String
+  },
   userPhone: {
     type: String,
     required: true,

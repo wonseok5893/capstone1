@@ -21,6 +21,8 @@ var _userRouter = _interopRequireDefault(require("./userRouter"));
 
 var _Reservation = _interopRequireDefault(require("../models/Reservation"));
 
+var _multerMiddleware = require("../multerMiddleware");
+
 var apiRouter = _express["default"].Router(); // const findUser = function (userName) {
 //   return database.users.filter((x) => x.name === userName);
 // };
@@ -86,25 +88,56 @@ exports.getUserInfo = getUserInfo;
 
 var sharedLocationEnroll = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body, latitude, longitude, price, user, sharedLocation;
+    var _req$body, userBirth, userCarNumber, location, latitude, longitude, parkingInfo, user, sharedLocation;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             console.log("배정자 등록 요청", req);
-            _req$body = req.body, latitude = _req$body.latitude, longitude = _req$body.longitude, price = _req$body.price;
-            _context2.next = 4;
+            _req$body = req.body, userBirth = _req$body.userBirth, userCarNumber = _req$body.userCarNumber, location = _req$body.location, latitude = _req$body.latitude, longitude = _req$body.longitude, parkingInfo = _req$body.parkingInfo;
+
+            if (req.file) {
+              _context2.next = 6;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "이미지 파일이 정상적으로 업로드 되지 않았습니다."
+            });
+            _context2.next = 34;
+            break;
+
+          case 6:
+            if (req.decoded) {
+              _context2.next = 11;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "잘못된 접근입니다"
+            });
+            fs.unlink(path.join(__dirname, "../../uploads/images/".concat(req.file.filename)), function (err) {
+              if (err) throw err;
+              console.log("잘못된 접근으로 만들어진", req.file.filename, "을 지웠습니다");
+            });
+            _context2.next = 34;
+            break;
+
+          case 11:
+            _context2.next = 13;
             return _User["default"].findOne({
               userId: req.decoded.userId
             });
 
-          case 4:
+          case 13:
             user = _context2.sent;
             console.log("TEST", user.sharingParkingLot);
 
             if (!user.sharingParkingLot) {
-              _context2.next = 10;
+              _context2.next = 19;
               break;
             }
 
@@ -112,57 +145,53 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               result: "fail",
               message: "등록된 공유 주차장이 있습니다."
             });
-            _context2.next = 25;
+            _context2.next = 34;
             break;
 
-          case 10:
-            _context2.prev = 10;
-            _context2.next = 13;
+          case 19:
+            _context2.prev = 19;
+            _context2.next = 22;
             return (0, _SharedLocation["default"])({
               owner: req.decoded._id,
+              filePath: req.file.path,
+              userCarNumber: userCarNumber,
+              userBirth: userBirth,
+              location: location,
               latitude: latitude,
               longitude: longitude,
-              price: price
+              parkingInfo: parkingInfo
             });
 
-          case 13:
+          case 22:
             sharedLocation = _context2.sent;
-            _context2.next = 16;
+            _context2.next = 25;
             return _SharedLocation["default"].create(sharedLocation);
 
-          case 16:
+          case 25:
             console.log(sharedLocation);
-            user.sharingParkingLot = sharedLocation._id;
-            user.save(function (err) {
-              if (err) res.json({
-                result: "fail",
-                message: "db 저장 실패"
-              });else {
-                res.json({
-                  result: "success",
-                  message: "배정자 (임시) 등록에 성공하였습니다." //관리자가 승인해주면 등록 안해주면 배정자 삭제 User parkingLot만 관리하면댐
-
-                });
-              }
+            console.log("배정자 등록 신청이 완료 되었습니다.");
+            res.json({
+              result: "success",
+              message: "배정자 등록 신청이 완료되었습니다."
             });
-            _context2.next = 25;
+            _context2.next = 34;
             break;
 
-          case 21:
-            _context2.prev = 21;
-            _context2.t0 = _context2["catch"](10);
+          case 30:
+            _context2.prev = 30;
+            _context2.t0 = _context2["catch"](19);
             console.log(_context2.t0);
             res.json({
               result: "fail",
-              message: "배정자 등록 실패"
+              message: "배정자 등록 신청 실패"
             });
 
-          case 25:
+          case 34:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[10, 21]]);
+    }, _callee2, null, [[19, 30]]);
   }));
 
   return function sharedLocationEnroll(_x3, _x4) {
@@ -304,10 +333,11 @@ var getAddress = function getAddress(req, res) {
 };
 
 apiRouter.post("/auth", getUserInfo);
-apiRouter.post("/sharedLocation/enroll", sharedLocationEnroll);
+apiRouter.post("/sharedLocation/enroll", _multerMiddleware.uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/car");
 apiRouter.get("/getLocation", getLocation);
 apiRouter.get("/getAddress", getAddress);
+apiRouter.get("/getLocation", getLocation);
 var _default = apiRouter;
 exports["default"] = _default;
