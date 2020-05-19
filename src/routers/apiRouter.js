@@ -92,7 +92,6 @@ const sharedLocationEnroll = async (req, res) => {
           });
 
           await SharedLocation.create(sharedLocation);
-          console.log(sharedLocation);
           console.log("배정자 등록 신청이 완료 되었습니다.");
           res.json({
             result: "success",
@@ -111,30 +110,42 @@ const reservationEnroll = async (req, res) => {
   console.log("예약 등록 요청", req);
 
   const {
-    body: { startTime, endTime, sum },
+    body: { _id, carNumber, startTime, endTime },
   } = req;
   if (!req.decoded) {
     res.json({ result: "fail", message: "잘못된 접근입니다." });
   } else {
     try {
-      const reservation = await Reservation({ startTime, endTime, sum });
-      await Reservation.create(reservation);
-    } catch (err) {
-      console.log(err);
-      res.json({ result: "fail", message: "예약 DB ERROR" });
-    }
-    try {
+      const reservation = await Reservation({
+        client: req.decoded._id,
+        location: _id,
+        carNumber,
+        startTime,
+        endTime,
+      });
+      const createdReservation = await Reservation.create(reservation);
+
       const user = await User.findOne({ userId: req.decoded.userId });
       user.reservation.push(reservation);
       user.save((err) => {
         if (err) {
           console.log(err);
           res.json({ result: "fail", message: "사용자 예약 등록 실패" });
-        } else {
-          console.log(reservation);
-          res.json({ result: "success", message: "사용자 예약 등록 완료" });
         }
       });
+      const sharedLocation = await SharedLocation.findOne({ _id });
+      createdReservation.owner = sharedLocation.owner;
+      createdReservation.save((err) => {
+        if (err) {
+          res.json({ result: "fail", message: "예약에 소유자 등록 실패" });
+        }
+      });
+      sharedLocation.reservationList.push(createdReservation._id);
+      sharedLocation.save((err) => {
+        if (err)
+          res.json({ result: "fail", message: "배정지 예약 리스트 등록 실패" });
+      });
+      res.json({ result: "success", message: "예약 완료 되었습니다." });
     } catch (err) {
       console.log(err);
       res.json({ result: "fail", message: "사용자 등록 DB ERROR" });
@@ -142,13 +153,20 @@ const reservationEnroll = async (req, res) => {
   }
 };
 
-const timeParse = (time) => {
-  console.log(time);
-};
-const getLocation = async (req, res) => {
+const allSharedLocation = async (req, res) => {
   console.log(req);
-  var apiURL = "https://openapi.naver.com/v1/map/geocode?query=" + req.query;
-  console.log(apiURL);
+  try {
+    const allSharedLocations = await SharedLocation.find({ state: 1 })
+      .select("location latitude longitude parkingInfo")
+      .populate({
+        path: "owner",
+        select: "userId userPhone",
+      });
+    console.log(allSharedLocations);
+    res.json({ result: "success", data: allSharedLocations });
+  } catch (err) {
+    res.json({ result: "fail", message: "db 에러" });
+  }
 };
 const getAddress = (req, res) => {
   console.log(req);
@@ -157,9 +175,8 @@ const getAddress = (req, res) => {
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
-apiRouter.post("/car");
-apiRouter.get("/getLocation", getLocation);
+apiRouter.post("/allSharedLocation", allSharedLocation);
+
 apiRouter.get("/getAddress", getAddress);
-apiRouter.get("/getLocation", getLocation);
 
 export default apiRouter;

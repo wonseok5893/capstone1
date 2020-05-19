@@ -7,6 +7,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports["default"] = exports.postJoin = exports.postLogin = void 0;
 
+var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
+
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
@@ -16,6 +18,12 @@ var _express = _interopRequireDefault(require("express"));
 var _User = _interopRequireDefault(require("../models/User"));
 
 var _jsonwebtoken = _interopRequireDefault(require("jsonwebtoken"));
+
+var _fs = _interopRequireDefault(require("fs"));
+
+var _path = _interopRequireDefault(require("path"));
+
+var _SharedLocation = _interopRequireDefault(require("../models/SharedLocation"));
 
 var userRouter = _express["default"].Router();
 
@@ -249,13 +257,99 @@ var changePassword = /*#__PURE__*/function () {
   };
 }();
 
+var myReservationList = /*#__PURE__*/function () {
+  var _ref4 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(req, res) {
+    var user;
+    return _regenerator["default"].wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            _context4.prev = 0;
+            _context4.next = 3;
+            return _User["default"].findOne({
+              userId: req.decoded.userId
+            }).populate("reservation").populate("client");
+
+          case 3:
+            user = _context4.sent;
+            console.log(user);
+            _context4.next = 10;
+            break;
+
+          case 7:
+            _context4.prev = 7;
+            _context4.t0 = _context4["catch"](0);
+            console.log(_context4.t0);
+
+          case 10:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4, null, [[0, 7]]);
+  }));
+
+  return function myReservationList(_x7, _x8) {
+    return _ref4.apply(this, arguments);
+  };
+}();
+
 var changePhone = function changePhone(req, res) {};
 
 var changeId = function changeId(req, res) {};
 
+var getImage = /*#__PURE__*/function () {
+  var _ref5 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(req, res) {
+    var filePath;
+    return _regenerator["default"].wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            filePath = _path["default"].format({
+              dir: "uploads/images",
+              base: "1589740033670.jpg"
+            });
+            console.log((0, _typeof2["default"])(filePath)); // try {
+            //   const sharedLocation = await ;
+            // } catch (err) {
+            //   console.log(err);
+            // }
+
+            _fs["default"].readFile(filePath, //파일 읽기
+            function (err, data) {
+              if (err) console.log(err);else {
+                console.log(data); //http의 헤더정보를 클라이언트쪽으로 출력
+                //image/jpg : jpg 이미지 파일을 전송한다
+                //write 로 보낼 내용을 입력
+
+                res.writeHead(200, {
+                  "Context-Type": "image/jpg"
+                }); //보낼 헤더를 만듬
+
+                res.write(data); //본문을 만들고
+
+                res.end(); //클라이언트에게 응답을 전송한다
+              }
+            });
+
+          case 3:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5);
+  }));
+
+  return function getImage(_x9, _x10) {
+    return _ref5.apply(this, arguments);
+  };
+}();
+
+userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
+userRouter.post("/myReservation", myReservationList);
 var _default = userRouter;
 exports["default"] = _default;

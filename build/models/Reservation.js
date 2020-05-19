@@ -10,13 +10,12 @@ exports["default"] = void 0;
 var _mongoose = _interopRequireDefault(require("mongoose"));
 
 var ReservationSchema = new _mongoose["default"].Schema({
-  owner: {
-    type: _mongoose["default"].Schema.Types.ObjectId,
-    ref: "User"
-  },
   client: {
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "User"
+  },
+  carNumber: {
+    type: String
   },
   location: {
     type: _mongoose["default"].Schema.Types.ObjectId,
@@ -36,7 +35,7 @@ var ReservationSchema = new _mongoose["default"].Schema({
     "enum": [-1, 0, 1],
     "default": 0
   },
-  //-1 지난예약/ 0 관리자 승인시 까지 보류중/ , 1/ 예약상태
+  //-1 지난예약 대기중 0 1 예약상태
   reservationTime: {
     type: Date,
     "default": Date.now

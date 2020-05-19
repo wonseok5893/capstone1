@@ -106,7 +106,7 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               result: "fail",
               message: "이미지 파일이 정상적으로 업로드 되지 않았습니다."
             });
-            _context2.next = 34;
+            _context2.next = 33;
             break;
 
           case 6:
@@ -123,7 +123,7 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               if (err) throw err;
               console.log("잘못된 접근으로 만들어진", req.file.filename, "을 지웠습니다");
             });
-            _context2.next = 34;
+            _context2.next = 33;
             break;
 
           case 11:
@@ -145,7 +145,7 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               result: "fail",
               message: "등록된 공유 주차장이 있습니다."
             });
-            _context2.next = 34;
+            _context2.next = 33;
             break;
 
           case 19:
@@ -168,17 +168,16 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
             return _SharedLocation["default"].create(sharedLocation);
 
           case 25:
-            console.log(sharedLocation);
             console.log("배정자 등록 신청이 완료 되었습니다.");
             res.json({
               result: "success",
               message: "배정자 등록 신청이 완료되었습니다."
             });
-            _context2.next = 34;
+            _context2.next = 33;
             break;
 
-          case 30:
-            _context2.prev = 30;
+          case 29:
+            _context2.prev = 29;
             _context2.t0 = _context2["catch"](19);
             console.log(_context2.t0);
             res.json({
@@ -186,12 +185,12 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               message: "배정자 등록 신청 실패"
             });
 
-          case 34:
+          case 33:
           case "end":
             return _context2.stop();
         }
       }
-    }, _callee2, null, [[19, 30]]);
+    }, _callee2, null, [[19, 29]]);
   }));
 
   return function sharedLocationEnroll(_x3, _x4) {
@@ -201,14 +200,14 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
 
 var reservationEnroll = /*#__PURE__*/function () {
   var _ref3 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(req, res) {
-    var _req$body2, startTime, endTime, sum, _reservation, user;
+    var _req$body2, _id, carNumber, startTime, endTime, reservation, createdReservation, user, sharedLocation;
 
     return _regenerator["default"].wrap(function _callee3$(_context3) {
       while (1) {
         switch (_context3.prev = _context3.next) {
           case 0:
             console.log("예약 등록 요청", req);
-            _req$body2 = req.body, startTime = _req$body2.startTime, endTime = _req$body2.endTime, sum = _req$body2.sum;
+            _req$body2 = req.body, _id = _req$body2._id, carNumber = _req$body2.carNumber, startTime = _req$body2.startTime, endTime = _req$body2.endTime;
 
             if (req.decoded) {
               _context3.next = 6;
@@ -219,44 +218,33 @@ var reservationEnroll = /*#__PURE__*/function () {
               result: "fail",
               message: "잘못된 접근입니다."
             });
-            _context3.next = 30;
+            _context3.next = 32;
             break;
 
           case 6:
             _context3.prev = 6;
             _context3.next = 9;
             return (0, _Reservation["default"])({
+              client: req.decoded._id,
+              location: _id,
+              carNumber: carNumber,
               startTime: startTime,
-              endTime: endTime,
-              sum: sum
+              endTime: endTime
             });
 
           case 9:
-            _reservation = _context3.sent;
+            reservation = _context3.sent;
             _context3.next = 12;
-            return _Reservation["default"].create(_reservation);
+            return _Reservation["default"].create(reservation);
 
           case 12:
-            _context3.next = 18;
-            break;
-
-          case 14:
-            _context3.prev = 14;
-            _context3.t0 = _context3["catch"](6);
-            console.log(_context3.t0);
-            res.json({
-              result: "fail",
-              message: "예약 DB ERROR"
-            });
-
-          case 18:
-            _context3.prev = 18;
-            _context3.next = 21;
+            createdReservation = _context3.sent;
+            _context3.next = 15;
             return _User["default"].findOne({
               userId: req.decoded.userId
             });
 
-          case 21:
+          case 15:
             user = _context3.sent;
             user.reservation.push(reservation);
             user.save(function (err) {
@@ -266,32 +254,53 @@ var reservationEnroll = /*#__PURE__*/function () {
                   result: "fail",
                   message: "사용자 예약 등록 실패"
                 });
-              } else {
-                console.log(reservation);
+              }
+            });
+            _context3.next = 20;
+            return _SharedLocation["default"].findOne({
+              _id: _id
+            });
+
+          case 20:
+            sharedLocation = _context3.sent;
+            createdReservation.owner = sharedLocation.owner;
+            createdReservation.save(function (err) {
+              if (err) {
                 res.json({
-                  result: "success",
-                  message: "사용자 예약 등록 완료"
+                  result: "fail",
+                  message: "예약에 소유자 등록 실패"
                 });
               }
             });
-            _context3.next = 30;
+            sharedLocation.reservationList.push(createdReservation._id);
+            sharedLocation.save(function (err) {
+              if (err) res.json({
+                result: "fail",
+                message: "배정지 예약 리스트 등록 실패"
+              });
+            });
+            res.json({
+              result: "success",
+              message: "예약 완료 되었습니다."
+            });
+            _context3.next = 32;
             break;
 
-          case 26:
-            _context3.prev = 26;
-            _context3.t1 = _context3["catch"](18);
-            console.log(_context3.t1);
+          case 28:
+            _context3.prev = 28;
+            _context3.t0 = _context3["catch"](6);
+            console.log(_context3.t0);
             res.json({
               result: "fail",
               message: "사용자 등록 DB ERROR"
             });
 
-          case 30:
+          case 32:
           case "end":
             return _context3.stop();
         }
       }
-    }, _callee3, null, [[6, 14], [18, 26]]);
+    }, _callee3, null, [[6, 28]]);
   }));
 
   return function reservationEnroll(_x5, _x6) {
@@ -299,30 +308,50 @@ var reservationEnroll = /*#__PURE__*/function () {
   };
 }();
 
-var timeParse = function timeParse(time) {
-  console.log(time);
-};
-
-var getLocation = /*#__PURE__*/function () {
+var allSharedLocation = /*#__PURE__*/function () {
   var _ref4 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(req, res) {
-    var apiURL;
+    var allSharedLocations;
     return _regenerator["default"].wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
             console.log(req);
-            apiURL = "https://openapi.naver.com/v1/map/geocode?query=" + req.query;
-            console.log(apiURL);
+            _context4.prev = 1;
+            _context4.next = 4;
+            return _SharedLocation["default"].find({
+              state: 1
+            }).select("location latitude longitude parkingInfo").populate({
+              path: "owner",
+              select: "userId userPhone"
+            });
 
-          case 3:
+          case 4:
+            allSharedLocations = _context4.sent;
+            console.log(allSharedLocations);
+            res.json({
+              result: "success",
+              data: allSharedLocations
+            });
+            _context4.next = 12;
+            break;
+
+          case 9:
+            _context4.prev = 9;
+            _context4.t0 = _context4["catch"](1);
+            res.json({
+              result: "fail",
+              message: "db 에러"
+            });
+
+          case 12:
           case "end":
             return _context4.stop();
         }
       }
-    }, _callee4);
+    }, _callee4, null, [[1, 9]]);
   }));
 
-  return function getLocation(_x7, _x8) {
+  return function allSharedLocation(_x7, _x8) {
     return _ref4.apply(this, arguments);
   };
 }();
@@ -335,9 +364,7 @@ var getAddress = function getAddress(req, res) {
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", _multerMiddleware.uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
-apiRouter.post("/car");
-apiRouter.get("/getLocation", getLocation);
+apiRouter.post("/allSharedLocation", allSharedLocation);
 apiRouter.get("/getAddress", getAddress);
-apiRouter.get("/getLocation", getLocation);
 var _default = apiRouter;
 exports["default"] = _default;

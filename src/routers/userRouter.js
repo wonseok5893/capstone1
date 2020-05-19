@@ -1,7 +1,9 @@
 import express from "express";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
-
+import fs from "fs";
+import path from "path";
+import SharedLocation from "../models/SharedLocation";
 const userRouter = express.Router();
 
 export const postLogin = async (req, res) => {
@@ -109,12 +111,51 @@ const changePassword = async function (req, res) {
     console.log(e);
   }
 };
+const myReservationList = async (req, res) => {
+  try {
+    const user = await User.findOne({ userId: req.decoded.userId }).populate(
+      "reservation"
+    );
+    console.log(user);
+  } catch (err) {
+    console.log(err);
+  }
+};
 const changePhone = function (req, res) {};
 const changeId = function (req, res) {};
+const getImage = async function (req, res) {
+  const filePath = path.format({
+    dir: "uploads/images",
+    base: "1589740033670.jpg",
+  });
+  console.log(typeof filePath);
+  // try {
+  //   const sharedLocation = await ;
+  // } catch (err) {
+  //   console.log(err);
+  // }
+  fs.readFile(
+    filePath, //파일 읽기
+    function (err, data) {
+      if (err) console.log(err);
+      else {
+        console.log(data);
+        //http의 헤더정보를 클라이언트쪽으로 출력
+        //image/jpg : jpg 이미지 파일을 전송한다
+        //write 로 보낼 내용을 입력
+        res.writeHead(200, { "Context-Type": "image/jpg" }); //보낼 헤더를 만듬
+        res.write(data); //본문을 만들고
+        res.end(); //클라이언트에게 응답을 전송한다
+      }
+    }
+  );
+};
 
+userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
+userRouter.post("/myReservation", myReservationList);
 
 export default userRouter;

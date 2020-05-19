@@ -11,7 +11,7 @@ const SharedLocationSchema = new mongoose.Schema({
   latitude: { type: String, required: true },
   longitude: { type: String, required: true },
   state: { type: Number, default: 0, enum: [0, 1] },
-  filePath: { type: String, required: true },
+  filePath: { type: String },
   parkingInfo: { type: String, required: true },
   enrollTime: { type: Date, default: Date.now },
 });
