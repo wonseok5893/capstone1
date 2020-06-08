@@ -111,16 +111,45 @@ const changePassword = async function (req, res) {
     console.log(e);
   }
 };
+
 const myReservationList = async (req, res) => {
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  }
   try {
-    const user = await User.findOne({ userId: req.decoded.userId }).populate(
-      "reservation"
-    );
-    console.log(user);
+    const reservations = await User.findOne({
+      userId: req.decoded.userId,
+    }).populate({
+      path: "reservation",
+      select: "startTime endTime carNumber location",
+    });
+
+    let locationInfo = {};
+    let data = reservations.reservation;
+    let locationData = [];
+    for (let e of data) {
+      let sharedlocation = await SharedLocation.findOne(
+        {
+          _id: e.location,
+        },
+        "location parkingInfo"
+      );
+      locationInfo.startTime = e.startTime;
+      locationInfo.endTime = e.endTime;
+      locationInfo.carNumber = e.carNumber;
+      locationInfo.location = sharedlocation.location;
+      locationInfo.parkingInfo = sharedlocation.parkingInfo;
+
+      locationData.push(locationInfo);
+      e.locationData = locationData;
+      locationInfo = {};
+    }
+    res.json({ data: locationData });
   } catch (err) {
     console.log(err);
   }
 };
+
 const changePhone = function (req, res) {};
 const changeId = function (req, res) {};
 const getImage = async function (req, res) {

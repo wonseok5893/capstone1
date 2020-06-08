@@ -9,6 +9,8 @@ exports["default"] = void 0;
 
 var _mongoose = _interopRequireDefault(require("mongoose"));
 
+var _moment = _interopRequireDefault(require("moment"));
+
 var ReservationSchema = new _mongoose["default"].Schema({
   client: {
     type: _mongoose["default"].Schema.Types.ObjectId,
@@ -22,23 +24,17 @@ var ReservationSchema = new _mongoose["default"].Schema({
     ref: "SharedLocation"
   },
   startTime: {
-    type: Date
+    type: String
   },
   endTime: {
-    type: Date
+    type: String
   },
   sum: {
     type: Number
   },
-  state: {
-    type: Number,
-    "enum": [-1, 0, 1],
-    "default": 0
-  },
-  //-1 지난예약 대기중 0 1 예약상태
   reservationTime: {
-    type: Date,
-    "default": Date.now
+    type: String,
+    "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
   },
   id: _mongoose["default"].Schema.Types.ObjectId
 });

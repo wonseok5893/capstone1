@@ -25,6 +25,12 @@ var _path = _interopRequireDefault(require("path"));
 
 var _SharedLocation = _interopRequireDefault(require("../models/SharedLocation"));
 
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 var userRouter = _express["default"].Router();
 
 var postLogin = /*#__PURE__*/function () {
@@ -259,34 +265,100 @@ var changePassword = /*#__PURE__*/function () {
 
 var myReservationList = /*#__PURE__*/function () {
   var _ref4 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(req, res) {
-    var user;
+    var reservations, locationInfo, data, locationData, _iterator, _step, e, sharedlocation;
+
     return _regenerator["default"].wrap(function _callee4$(_context4) {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
-            _context4.prev = 0;
-            _context4.next = 3;
+            if (!req.decoded) {
+              res.json({
+                result: "fail",
+                message: "잘못된 접근입니다."
+              });
+            }
+
+            _context4.prev = 1;
+            _context4.next = 4;
             return _User["default"].findOne({
               userId: req.decoded.userId
-            }).populate("reservation").populate("client");
+            }).populate({
+              path: "reservation",
+              select: "startTime endTime carNumber location"
+            });
 
-          case 3:
-            user = _context4.sent;
-            console.log(user);
-            _context4.next = 10;
+          case 4:
+            reservations = _context4.sent;
+            locationInfo = {};
+            data = reservations.reservation;
+            locationData = [];
+            _iterator = _createForOfIteratorHelper(data);
+            _context4.prev = 9;
+
+            _iterator.s();
+
+          case 11:
+            if ((_step = _iterator.n()).done) {
+              _context4.next = 26;
+              break;
+            }
+
+            e = _step.value;
+            _context4.next = 15;
+            return _SharedLocation["default"].findOne({
+              _id: e.location
+            }, "location parkingInfo");
+
+          case 15:
+            sharedlocation = _context4.sent;
+            locationInfo.startTime = e.startTime;
+            locationInfo.endTime = e.endTime;
+            locationInfo.carNumber = e.carNumber;
+            locationInfo.location = sharedlocation.location;
+            locationInfo.parkingInfo = sharedlocation.parkingInfo;
+            locationData.push(locationInfo);
+            e.locationData = locationData;
+            locationInfo = {};
+
+          case 24:
+            _context4.next = 11;
             break;
 
-          case 7:
-            _context4.prev = 7;
-            _context4.t0 = _context4["catch"](0);
-            console.log(_context4.t0);
+          case 26:
+            _context4.next = 31;
+            break;
 
-          case 10:
+          case 28:
+            _context4.prev = 28;
+            _context4.t0 = _context4["catch"](9);
+
+            _iterator.e(_context4.t0);
+
+          case 31:
+            _context4.prev = 31;
+
+            _iterator.f();
+
+            return _context4.finish(31);
+
+          case 34:
+            res.json({
+              data: locationData
+            });
+            _context4.next = 40;
+            break;
+
+          case 37:
+            _context4.prev = 37;
+            _context4.t1 = _context4["catch"](1);
+            console.log(_context4.t1);
+
+          case 40:
           case "end":
             return _context4.stop();
         }
       }
-    }, _callee4, null, [[0, 7]]);
+    }, _callee4, null, [[1, 37], [9, 28, 31, 34]]);
   }));
 
   return function myReservationList(_x7, _x8) {
@@ -343,13 +415,22 @@ var getImage = /*#__PURE__*/function () {
   return function getImage(_x9, _x10) {
     return _ref5.apply(this, arguments);
   };
-}();
+}(); // async function example(req, res) {
+//   const data = await SharedLocation.find({
+//     _id: "5ecfbb5cf649dc03ccae5075",
+//   }).populate({ path: "reservationList", select: "startTime endTime" });
+//   JSON.stringify(data);
+//   console.log(data);
+//   res.json(JSON.stringify(data));
+// }
+
 
 userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
-userRouter.post("/myReservation", myReservationList);
+userRouter.post("/myReservation", myReservationList); // userRouter.get("/data", example);
+
 var _default = userRouter;
 exports["default"] = _default;

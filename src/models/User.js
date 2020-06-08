@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import moment from "moment";
 
 const UserSchema = new mongoose.Schema({
   userId: {
@@ -14,7 +15,10 @@ const UserSchema = new mongoose.Schema({
   userBirth: { type: String },
   userPhone: { type: String, required: true, trim: true },
   userCarNumber: { type: String, trim: true },
-  created: { type: Date, default: Date.now },
+  created: {
+    type: String,
+    default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),
+  },
   point: { type: Number, default: 0 },
   reservation: [{ type: mongoose.Schema.Types.ObjectId, ref: "Reservation" }],
   sharingParkingLot: {

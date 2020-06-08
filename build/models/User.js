@@ -9,6 +9,8 @@ exports["default"] = void 0;
 
 var _mongoose = _interopRequireDefault(require("mongoose"));
 
+var _moment = _interopRequireDefault(require("moment"));
+
 var UserSchema = new _mongoose["default"].Schema({
   userId: {
     type: String,
@@ -45,8 +47,8 @@ var UserSchema = new _mongoose["default"].Schema({
     trim: true
   },
   created: {
-    type: Date,
-    "default": Date.now
+    type: String,
+    "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
   },
   point: {
     type: Number,

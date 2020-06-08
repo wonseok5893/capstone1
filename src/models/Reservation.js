@@ -1,14 +1,17 @@
 import mongoose from "mongoose";
+import moment from "moment";
 
 const ReservationSchema = new mongoose.Schema({
   client: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   carNumber: { type: String },
   location: { type: mongoose.Schema.Types.ObjectId, ref: "SharedLocation" },
-  startTime: { type: Date },
-  endTime: { type: Date },
+  startTime: { type: String },
+  endTime: { type: String },
   sum: { type: Number },
-  state: { type: Number, enum: [-1, 0, 1], default: 0 }, //-1 지난예약 대기중 0 1 예약상태
-  reservationTime: { type: Date, default: Date.now },
+  reservationTime: {
+    type: String,
+    default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),
+  },
   id: mongoose.Schema.Types.ObjectId,
 });
 

@@ -234,7 +234,7 @@ var checkSharedLocation = /*#__PURE__*/function () {
             }
 
             res.json({
-              result: "failt",
+              registerLocationResult: "fail",
               message: "등록된 주차장이 있습니다."
             });
             _context3.next = 23;
@@ -402,48 +402,27 @@ var adminEditPassword = /*#__PURE__*/function () {
   return function adminEditPassword(_x9, _x10) {
     return _ref5.apply(this, arguments);
   };
-}();
+}(); //공지사항
+
 
 var allNotice = /*#__PURE__*/function () {
   var _ref6 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(req, res) {
-    var user, notices;
+    var notices;
     return _regenerator["default"].wrap(function _callee6$(_context6) {
       while (1) {
         switch (_context6.prev = _context6.next) {
           case 0:
             console.log(req);
             _context6.next = 3;
-            return _User["default"].findOne({
-              userId: req.decoded.userId
-            });
-
-          case 3:
-            user = _context6.sent;
-
-            if (!(user.state != 1)) {
-              _context6.next = 8;
-              break;
-            }
-
-            res.json({
-              result: "fail",
-              message: "잘못된 접근입니다."
-            });
-            _context6.next = 12;
-            break;
-
-          case 8:
-            _context6.next = 10;
             return _Notice["default"].find();
 
-          case 10:
+          case 3:
             notices = _context6.sent;
             res.json({
-              result: "success",
               data: notices
             });
 
-          case 12:
+          case 5:
           case "end":
             return _context6.stop();
         }
@@ -678,6 +657,7 @@ globalRouter.get("/", getHome);
 globalRouter.get("/upload", function (req, res) {
   res.render("uploadTest");
 });
+globalRouter.get("/notices", allNotice);
 globalRouter.post("/upload", _multerMiddleware.uploadImage, uploadTest);
 globalRouter.post("/admin/users", getAllusers);
 globalRouter.post("/admin/allNotice", allNotice);

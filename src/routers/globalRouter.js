@@ -8,7 +8,7 @@ import fs, { readSync } from "fs";
 import Notice from "../models/Notice";
 import path from "path";
 import { isError } from "util";
-import e from "express";
+
 const globalRouter = express.Router();
 
 const getHome = function (req, res) {
@@ -78,7 +78,10 @@ const checkSharedLocation = async (req, res) => {
     console.log(req);
     const owner = await User.findOne({ userId });
     if (owner.sharingParkingLot) {
-      res.json({ result: "failt", message: "등록된 주차장이 있습니다." });
+      res.json({
+        registerLocationResult: "fail",
+        message: "등록된 주차장이 있습니다.",
+      });
     } else {
       owner.sharingParkingLot = _id;
       owner.save(function (err) {
@@ -146,15 +149,11 @@ const adminEditPassword = async (req, res) => {
     });
   }
 };
+//공지사항
 const allNotice = async (req, res) => {
   console.log(req);
-  const user = await User.findOne({ userId: req.decoded.userId });
-  if (user.state != 1) {
-    res.json({ result: "fail", message: "잘못된 접근입니다." });
-  } else {
-    const notices = await Notice.find();
-    res.json({ result: "success", data: notices });
-  }
+  const notices = await Notice.find();
+  res.json({ data: notices });
 };
 
 const adminEditState = async (req, res) => {
@@ -244,6 +243,7 @@ globalRouter.get("/", getHome);
 globalRouter.get("/upload", (req, res) => {
   res.render("uploadTest");
 });
+globalRouter.get("/notices", allNotice);
 globalRouter.post("/upload", uploadImage, uploadTest);
 globalRouter.post("/admin/users", getAllusers);
 globalRouter.post("/admin/allNotice", allNotice);

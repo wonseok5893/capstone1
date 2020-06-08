@@ -23,10 +23,13 @@ var _Reservation = _interopRequireDefault(require("../models/Reservation"));
 
 var _multerMiddleware = require("../multerMiddleware");
 
-var apiRouter = _express["default"].Router(); // const findUser = function (userName) {
-//   return database.users.filter((x) => x.name === userName);
-// };
+var _moment = _interopRequireDefault(require("moment"));
 
+require("moment-timezone");
+
+_moment["default"].tz.setDefault("Asia/Seoul");
+
+var apiRouter = _express["default"].Router();
 
 var getUserInfo = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(req, res) {
@@ -159,7 +162,10 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               location: location,
               latitude: latitude,
               longitude: longitude,
-              parkingInfo: parkingInfo
+              parkingInfo: parkingInfo,
+              // possibleStartTime,
+              // possibleEndTime,
+              timeState: [0, 0, 0, 0, 0, 0]
             });
 
           case 22:
@@ -315,9 +321,10 @@ var allSharedLocation = /*#__PURE__*/function () {
       while (1) {
         switch (_context4.prev = _context4.next) {
           case 0:
-            console.log(req);
-            _context4.prev = 1;
-            _context4.next = 4;
+            console.log("\uBAA8\uB4E0 \uB9C8\uCEE4 \uC815\uBCF4 \uC1A1\uC2E0->".concat(req.headers));
+            console.log(req.headers["x-forwarded-for"], req.connection.remoteAddress);
+            _context4.prev = 2;
+            _context4.next = 5;
             return _SharedLocation["default"].find({
               state: 1
             }).select("location latitude longitude parkingInfo").populate({
@@ -325,9 +332,8 @@ var allSharedLocation = /*#__PURE__*/function () {
               select: "userId userPhone"
             });
 
-          case 4:
+          case 5:
             allSharedLocations = _context4.sent;
-            console.log(allSharedLocations);
             res.json({
               result: "success",
               data: allSharedLocations
@@ -337,7 +343,7 @@ var allSharedLocation = /*#__PURE__*/function () {
 
           case 9:
             _context4.prev = 9;
-            _context4.t0 = _context4["catch"](1);
+            _context4.t0 = _context4["catch"](2);
             res.json({
               result: "fail",
               message: "db 에러"
@@ -348,7 +354,7 @@ var allSharedLocation = /*#__PURE__*/function () {
             return _context4.stop();
         }
       }
-    }, _callee4, null, [[1, 9]]);
+    }, _callee4, null, [[2, 9]]);
   }));
 
   return function allSharedLocation(_x7, _x8) {
@@ -361,10 +367,46 @@ var getAddress = function getAddress(req, res) {
   res.render("getAddress");
 };
 
+var sharedLocationReserveList = /*#__PURE__*/function () {
+  var _ref5 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(req, res) {
+    var locationId, reserveList;
+    return _regenerator["default"].wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            console.log(req);
+            locationId = req.query.locationId;
+            _context5.next = 4;
+            return _SharedLocation["default"].findOne({
+              _id: locationId
+            }).select("reservationList").populate({
+              path: "reservationList",
+              select: "startTime endTime"
+            });
+
+          case 4:
+            reserveList = _context5.sent;
+            console.log(reserveList);
+            res.json(reserveList);
+
+          case 7:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5);
+  }));
+
+  return function sharedLocationReserveList(_x9, _x10) {
+    return _ref5.apply(this, arguments);
+  };
+}();
+
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", _multerMiddleware.uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
+apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
 var _default = apiRouter;
 exports["default"] = _default;

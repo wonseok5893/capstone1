@@ -9,6 +9,8 @@ exports["default"] = void 0;
 
 var _mongoose = _interopRequireDefault(require("mongoose"));
 
+var _moment = _interopRequireDefault(require("moment"));
+
 var NoticeSchema = new _mongoose["default"].Schema({
   title: {
     type: String
@@ -17,8 +19,8 @@ var NoticeSchema = new _mongoose["default"].Schema({
     type: String
   },
   enrollTime: {
-    type: Date,
-    "default": Date.now
+    type: String,
+    "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
   },
   id: _mongoose["default"].Schema.Types.ObjectId
 });

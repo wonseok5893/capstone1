@@ -4,12 +4,12 @@ import SharedLocation from "../models/SharedLocation";
 import userRouter from "./userRouter";
 import Reservation from "../models/Reservation";
 import { uploadImage } from "../multerMiddleware";
+import moment from "moment";
+import "moment-timezone";
+moment.tz.setDefault("Asia/Seoul");
 
 const apiRouter = express.Router();
 
-// const findUser = function (userName) {
-//   return database.users.filter((x) => x.name === userName);
-// };
 export const getUserInfo = async function (req, res) {
   if (!req.decoded) {
     res.json({
@@ -89,6 +89,9 @@ const sharedLocationEnroll = async (req, res) => {
             latitude,
             longitude,
             parkingInfo,
+            // possibleStartTime,
+            // possibleEndTime,
+            timeState: [0, 0, 0, 0, 0, 0],
           });
 
           await SharedLocation.create(sharedLocation);
@@ -108,10 +111,10 @@ const sharedLocationEnroll = async (req, res) => {
 
 const reservationEnroll = async (req, res) => {
   console.log("예약 등록 요청", req);
-
   const {
     body: { _id, carNumber, startTime, endTime },
   } = req;
+
   if (!req.decoded) {
     res.json({ result: "fail", message: "잘못된 접근입니다." });
   } else {
@@ -154,7 +157,8 @@ const reservationEnroll = async (req, res) => {
 };
 
 const allSharedLocation = async (req, res) => {
-  console.log(req);
+  console.log(`모든 마커 정보 송신->${req.headers}`);
+  console.log(req.headers["x-forwarded-for"], req.connection.remoteAddress);
   try {
     const allSharedLocations = await SharedLocation.find({ state: 1 })
       .select("location latitude longitude parkingInfo")
@@ -162,7 +166,7 @@ const allSharedLocation = async (req, res) => {
         path: "owner",
         select: "userId userPhone",
       });
-    console.log(allSharedLocations);
+
     res.json({ result: "success", data: allSharedLocations });
   } catch (err) {
     res.json({ result: "fail", message: "db 에러" });
@@ -172,11 +176,25 @@ const getAddress = (req, res) => {
   console.log(req);
   res.render("getAddress");
 };
+const sharedLocationReserveList = async (req, res) => {
+  console.log(req);
+  const {
+    query: { locationId },
+  } = req;
+
+  const reserveList = await SharedLocation.findOne({
+    _id: locationId,
+  })
+    .select("reservationList")
+    .populate({ path: "reservationList", select: "startTime endTime" });
+  console.log(reserveList);
+  res.json(reserveList);
+};
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
-
+apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
 
 export default apiRouter;

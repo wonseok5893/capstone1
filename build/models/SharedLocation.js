@@ -9,6 +9,8 @@ exports["default"] = void 0;
 
 var _mongoose = _interopRequireDefault(require("mongoose"));
 
+var _moment = _interopRequireDefault(require("moment"));
+
 var SharedLocationSchema = new _mongoose["default"].Schema({
   owner: {
     type: _mongoose["default"].Schema.Types.ObjectId,
@@ -38,11 +40,32 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
     type: String,
     required: true
   },
+  possibleStartTime: {
+    type: String
+  },
+  //등록 시작 시간
+  possibleEndTime: {
+    type: String
+  },
+  //등록 종료 시간
   state: {
     type: Number,
     "default": 0,
     "enum": [0, 1]
   },
+  // 등록 신청한 공유주차장 / 등록된 공유주차장
+  currentState: {
+    type: Number,
+    "default": 0,
+    "enum": [-1, 0, 1]
+  },
+  //공유중 0 //공유 안 하는중 -1// 이용중 1
+  timeState: [{
+    type: Number,
+    "default": 0,
+    "enum": [0, 1]
+  }],
+  //월 화 수 목 금 토 일
   filePath: {
     type: String
   },
@@ -51,8 +74,8 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
     required: true
   },
   enrollTime: {
-    type: Date,
-    "default": Date.now
+    type: String,
+    "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
   }
 });
 
