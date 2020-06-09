@@ -41,11 +41,13 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
     required: true
   },
   possibleStartTime: {
-    type: String
+    type: String,
+    "default": "00:00"
   },
   //등록 시작 시간
   possibleEndTime: {
-    type: String
+    type: String,
+    "default": "00:00"
   },
   //등록 종료 시간
   state: {

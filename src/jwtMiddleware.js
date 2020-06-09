@@ -21,3 +21,14 @@ export const jwtMiddleware = async (req, res, next) => {
     });
   }
 };
+
+export const adminCheck = (req, res, next) => {
+  if (
+    req.connection.remoteAddress === "::ffff:175.119.165.7" ||
+    req.connection.remoteAddress === "::ffff:222.251.129.150"
+  )
+    next();
+  else {
+    res.status(403).json({ result: "fail", message: "잘못된 접근" });
+  }
+};

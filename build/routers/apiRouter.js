@@ -163,9 +163,9 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               latitude: latitude,
               longitude: longitude,
               parkingInfo: parkingInfo,
-              // possibleStartTime,
-              // possibleEndTime,
-              timeState: [0, 0, 0, 0, 0, 0]
+              // possibleStartTime: "",
+              // possibleEndTime: "",
+              timeState: [0, 0, 0, 0, 0, 0, 0]
             });
 
           case 22:
@@ -369,7 +369,7 @@ var getAddress = function getAddress(req, res) {
 
 var sharedLocationReserveList = /*#__PURE__*/function () {
   var _ref5 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee5(req, res) {
-    var locationId, reserveList;
+    var locationId, reserveList, data;
     return _regenerator["default"].wrap(function _callee5$(_context5) {
       while (1) {
         switch (_context5.prev = _context5.next) {
@@ -386,8 +386,12 @@ var sharedLocationReserveList = /*#__PURE__*/function () {
 
           case 4:
             reserveList = _context5.sent;
-            console.log(reserveList);
-            res.json(reserveList);
+            data = reserveList.reservationList.filter(function (e) {
+              return +e.startTime.slice(8, 10) < +(0, _moment["default"])().format("DD") + 2;
+            });
+            res.json({
+              reservationList: data
+            });
 
           case 7:
           case "end":
@@ -402,11 +406,255 @@ var sharedLocationReserveList = /*#__PURE__*/function () {
   };
 }();
 
+var shareInfo = /*#__PURE__*/function () {
+  var _ref6 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee6(req, res) {
+    var user;
+    return _regenerator["default"].wrap(function _callee6$(_context6) {
+      while (1) {
+        switch (_context6.prev = _context6.next) {
+          case 0:
+            if (req.decoded) {
+              _context6.next = 4;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "잘못된 접근입니다."
+            });
+            _context6.next = 15;
+            break;
+
+          case 4:
+            _context6.prev = 4;
+            _context6.next = 7;
+            return _User["default"].findOne({
+              userId: req.decoded.userId
+            }).populate({
+              path: "sharingParkingLot",
+              select: "timeState possibleStartTime possibleEndTime"
+            });
+
+          case 7:
+            user = _context6.sent;
+
+            if (!user.sharingParkingLot) {
+              res.json({
+                result: "fail",
+                message: "주차장을 먼저 공유하세요."
+              });
+            } else {
+              res.json({
+                result: "success",
+                message: "공유 시간 정보 확인",
+                startTime: user.sharingParkingLot.possibleStartTime,
+                endTime: user.sharingParkingLot.possibleEndTime,
+                Sun: user.sharingParkingLot.timeState[0],
+                Mon: user.sharingParkingLot.timeState[1],
+                Tue: user.sharingParkingLot.timeState[2],
+                Wed: user.sharingParkingLot.timeState[3],
+                Thu: user.sharingParkingLot.timeState[4],
+                Fri: user.sharingParkingLot.timeState[5],
+                Sat: user.sharingParkingLot.timeState[6]
+              });
+            }
+
+            _context6.next = 15;
+            break;
+
+          case 11:
+            _context6.prev = 11;
+            _context6.t0 = _context6["catch"](4);
+            res.json({
+              result: "fail",
+              message: "db 오류"
+            });
+            console.log(_context6.t0);
+
+          case 15:
+          case "end":
+            return _context6.stop();
+        }
+      }
+    }, _callee6, null, [[4, 11]]);
+  }));
+
+  return function shareInfo(_x11, _x12) {
+    return _ref6.apply(this, arguments);
+  };
+}();
+
+var updateShareInfo = /*#__PURE__*/function () {
+  var _ref7 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee7(req, res) {
+    var _req$body3, startTime, endTime, days, user, sharedLocationID, sharedLocation;
+
+    return _regenerator["default"].wrap(function _callee7$(_context7) {
+      while (1) {
+        switch (_context7.prev = _context7.next) {
+          case 0:
+            console.log(req);
+
+            if (req.decoded) {
+              _context7.next = 5;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "잘못된 접근입니다."
+            });
+            _context7.next = 28;
+            break;
+
+          case 5:
+            _req$body3 = req.body, startTime = _req$body3.startTime, endTime = _req$body3.endTime, days = _req$body3.days;
+            _context7.prev = 6;
+            _context7.next = 9;
+            return _User["default"].findOne({
+              userId: req.decoded.userId
+            });
+
+          case 9:
+            user = _context7.sent;
+            sharedLocationID = user.sharingParkingLot;
+
+            if (user.sharingParkingLot) {
+              _context7.next = 15;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "주차장을 먼저 공유하세요."
+            });
+            _context7.next = 22;
+            break;
+
+          case 15:
+            _context7.next = 17;
+            return _SharedLocation["default"].findOne({
+              _id: sharedLocationID
+            });
+
+          case 17:
+            sharedLocation = _context7.sent;
+            sharedLocation.possibleEndTime = endTime;
+            sharedLocation.possibleStartTime = startTime;
+            sharedLocation.timeState = JSON.parse(days);
+            sharedLocation.save(function (err) {
+              if (err) res.json({
+                result: "fail",
+                message: "공유시간 수정 실패"
+              });else res.json({
+                result: "success",
+                message: "공유시간 수정 성공"
+              });
+            });
+
+          case 22:
+            _context7.next = 28;
+            break;
+
+          case 24:
+            _context7.prev = 24;
+            _context7.t0 = _context7["catch"](6);
+            console.log(_context7.t0);
+            res.json({
+              result: "fail",
+              message: "db 오류"
+            });
+
+          case 28:
+          case "end":
+            return _context7.stop();
+        }
+      }
+    }, _callee7, null, [[6, 24]]);
+  }));
+
+  return function updateShareInfo(_x13, _x14) {
+    return _ref7.apply(this, arguments);
+  };
+}();
+
+var sharingSwitch = /*#__PURE__*/function () {
+  var _ref8 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee8(req, res) {
+    var turn, user;
+    return _regenerator["default"].wrap(function _callee8$(_context8) {
+      while (1) {
+        switch (_context8.prev = _context8.next) {
+          case 0:
+            turn = req.body.turn;
+
+            if (req.decoded) {
+              _context8.next = 5;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "잘못된 접근입니다."
+            });
+            _context8.next = 15;
+            break;
+
+          case 5:
+            _context8.prev = 5;
+            _context8.next = 8;
+            return _User["default"].findOne({
+              userId: req.decoded.userId
+            }).populate({
+              path: "sharingParkingLot",
+              select: "timeState "
+            });
+
+          case 8:
+            user = _context8.sent;
+
+            if (!user.sharingParkingLot) {
+              res.json({
+                result: "fail",
+                message: "주차장을 먼저 공유하세요."
+              });
+            } else {
+              if (turn == 1) user.sharingParkingLot.timeState[new Date().getDay()] = 1;else if (turn == 0) user.sharingParkingLot.timeState[new Date().getDay()] = 0;
+              user.save(function (err) {
+                if (err) res.json({
+                  result: "fail",
+                  message: "공유 중지 / 시작"
+                });
+              });
+            }
+
+            _context8.next = 15;
+            break;
+
+          case 12:
+            _context8.prev = 12;
+            _context8.t0 = _context8["catch"](5);
+            console.log(_context8.t0);
+
+          case 15:
+          case "end":
+            return _context8.stop();
+        }
+      }
+    }, _callee8, null, [[5, 12]]);
+  }));
+
+  return function sharingSwitch(_x15, _x16) {
+    return _ref8.apply(this, arguments);
+  };
+}();
+
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", _multerMiddleware.uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
 apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
+apiRouter.post("/shareInfo", shareInfo);
+apiRouter.post("/sharingSwitch", sharingSwitch);
+apiRouter.post("/sendShareInfo", updateShareInfo);
 var _default = apiRouter;
 exports["default"] = _default;

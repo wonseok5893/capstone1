@@ -5,7 +5,7 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.jwtMiddleware = void 0;
+exports.adminCheck = exports.jwtMiddleware = void 0;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
@@ -64,3 +64,14 @@ var jwtMiddleware = /*#__PURE__*/function () {
 }();
 
 exports.jwtMiddleware = jwtMiddleware;
+
+var adminCheck = function adminCheck(req, res, next) {
+  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:222.251.129.150") next();else {
+    res.status(403).json({
+      result: "fail",
+      message: "잘못된 접근"
+    });
+  }
+};
+
+exports.adminCheck = adminCheck;

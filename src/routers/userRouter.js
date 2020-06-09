@@ -83,6 +83,46 @@ const getJoin = function (req, res) {
   res.send("회원가입 페이지입니다!");
 };
 
+const myReservationList = async (req, res) => {
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+    try {
+      const reservations = await User.findOne({
+        userId: req.decoded.userId,
+      }).populate({
+        path: "reservation",
+        select: "startTime endTime carNumber location",
+      });
+
+      let locationInfo = {};
+      let data = reservations.reservation;
+      let locationData = [];
+      for (let e of data) {
+        let sharedlocation = await SharedLocation.findOne(
+          {
+            _id: e.location,
+          },
+          "location parkingInfo"
+        );
+        console.log();
+        locationInfo.startTime = e.startTime;
+        locationInfo.endTime = e.endTime;
+        locationInfo.carNumber = e.carNumber;
+        locationInfo.location = sharedlocation.location;
+        locationInfo.parkingInfo = sharedlocation.parkingInfo;
+
+        locationData.push(locationInfo);
+        e.locationData = locationData;
+        locationInfo = {};
+      }
+      res.json({ data: locationData });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+};
+
 const changePassword = async function (req, res) {
   console.log("비밀번호 변경 요청", req);
   const userId = req.decoded.userId;
@@ -111,45 +151,6 @@ const changePassword = async function (req, res) {
     console.log(e);
   }
 };
-
-const myReservationList = async (req, res) => {
-  if (!req.decoded) {
-    res.json({ result: "fail", message: "잘못된 접근입니다." });
-  }
-  try {
-    const reservations = await User.findOne({
-      userId: req.decoded.userId,
-    }).populate({
-      path: "reservation",
-      select: "startTime endTime carNumber location",
-    });
-
-    let locationInfo = {};
-    let data = reservations.reservation;
-    let locationData = [];
-    for (let e of data) {
-      let sharedlocation = await SharedLocation.findOne(
-        {
-          _id: e.location,
-        },
-        "location parkingInfo"
-      );
-      locationInfo.startTime = e.startTime;
-      locationInfo.endTime = e.endTime;
-      locationInfo.carNumber = e.carNumber;
-      locationInfo.location = sharedlocation.location;
-      locationInfo.parkingInfo = sharedlocation.parkingInfo;
-
-      locationData.push(locationInfo);
-      e.locationData = locationData;
-      locationInfo = {};
-    }
-    res.json({ data: locationData });
-  } catch (err) {
-    console.log(err);
-  }
-};
-
 const changePhone = function (req, res) {};
 const changeId = function (req, res) {};
 const getImage = async function (req, res) {
@@ -179,6 +180,31 @@ const getImage = async function (req, res) {
     }
   );
 };
+const userCarEnroll = async function (req, res) {
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+    const {
+      body: { userCarNumber },
+    } = req;
+    try {
+      const user = await User.findOne({ userId: req.decoded.userId });
+      user.userCarNumber = userCarNumber;
+      user.save(function (err) {
+        if (err) res.json({ result: "fail", message: "db 저장 실패" });
+        else {
+          res.json({
+            result: "success",
+            message: "차량 등록이 되었습니다",
+          });
+        }
+      });
+    } catch (err) {
+      res.json({ result: "fail", message: "db 오류" });
+      console.log(err);
+    }
+  }
+};
 
 userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
@@ -186,5 +212,6 @@ userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
 userRouter.post("/myReservation", myReservationList);
+userRouter.post("/carEnroll", userCarEnroll);
 
 export default userRouter;

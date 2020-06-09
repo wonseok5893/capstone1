@@ -6,6 +6,7 @@ import Reservation from "../models/Reservation";
 import { uploadImage } from "../multerMiddleware";
 import moment from "moment";
 import "moment-timezone";
+import e from "express";
 moment.tz.setDefault("Asia/Seoul");
 
 const apiRouter = express.Router();
@@ -89,9 +90,9 @@ const sharedLocationEnroll = async (req, res) => {
             latitude,
             longitude,
             parkingInfo,
-            // possibleStartTime,
-            // possibleEndTime,
-            timeState: [0, 0, 0, 0, 0, 0],
+            // possibleStartTime: "",
+            // possibleEndTime: "",
+            timeState: [0, 0, 0, 0, 0, 0, 0],
           });
 
           await SharedLocation.create(sharedLocation);
@@ -187,14 +188,123 @@ const sharedLocationReserveList = async (req, res) => {
   })
     .select("reservationList")
     .populate({ path: "reservationList", select: "startTime endTime" });
-  console.log(reserveList);
-  res.json(reserveList);
+
+  let data = reserveList.reservationList.filter(function (e) {
+    return +e.startTime.slice(8, 10) < +moment().format("DD") + 2;
+  });
+
+  res.json({ reservationList: data });
 };
+const shareInfo = async function (req, res) {
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+    try {
+      const user = await User.findOne({ userId: req.decoded.userId }).populate({
+        path: "sharingParkingLot",
+        select: "timeState possibleStartTime possibleEndTime",
+      });
+
+      if (!user.sharingParkingLot) {
+        res.json({ result: "fail", message: "주차장을 먼저 공유하세요." });
+      } else {
+        res.json({
+          result: "success",
+          message: "공유 시간 정보 확인",
+          startTime: user.sharingParkingLot.possibleStartTime,
+          endTime: user.sharingParkingLot.possibleEndTime,
+          Sun: user.sharingParkingLot.timeState[0],
+          Mon: user.sharingParkingLot.timeState[1],
+          Tue: user.sharingParkingLot.timeState[2],
+          Wed: user.sharingParkingLot.timeState[3],
+          Thu: user.sharingParkingLot.timeState[4],
+          Fri: user.sharingParkingLot.timeState[5],
+          Sat: user.sharingParkingLot.timeState[6],
+        });
+      }
+    } catch (err) {
+      res.json({ result: "fail", message: "db 오류" });
+      console.log(err);
+    }
+  }
+};
+const updateShareInfo = async function (req, res) {
+  console.log(req);
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+    const {
+      body: { startTime, endTime, days },
+    } = req;
+
+    try {
+      const user = await User.findOne({ userId: req.decoded.userId });
+      const sharedLocationID = user.sharingParkingLot;
+      if (!user.sharingParkingLot) {
+        res.json({ result: "fail", message: "주차장을 먼저 공유하세요." });
+      } else {
+        const sharedLocation = await SharedLocation.findOne({
+          _id: sharedLocationID,
+        });
+        sharedLocation.possibleEndTime = endTime;
+        sharedLocation.possibleStartTime = startTime;
+        sharedLocation.timeState = JSON.parse(days);
+        sharedLocation.save((err) => {
+          if (err)
+            res.json({
+              result: "fail",
+              message: "공유시간 수정 실패",
+            });
+          else res.json({ result: "success", message: "공유시간 수정 성공" });
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      res.json({ result: "fail", message: "db 오류" });
+    }
+  }
+};
+const sharingSwitch = async function (req, res) {
+  const {
+    body: { turn },
+  } = req;
+  if (!req.decoded) {
+    res.json({ result: "fail", message: "잘못된 접근입니다." });
+  } else {
+    try {
+      const user = await User.findOne({ userId: req.decoded.userId }).populate({
+        path: "sharingParkingLot",
+        select: "timeState ",
+      });
+      if (!user.sharingParkingLot) {
+        res.json({ result: "fail", message: "주차장을 먼저 공유하세요." });
+      } else {
+        if (turn == 1)
+          user.sharingParkingLot.timeState[new Date().getDay()] = 1;
+        else if (turn == 0)
+          user.sharingParkingLot.timeState[new Date().getDay()] = 0;
+        user.save((err) => {
+          if (err)
+            res.json({
+              result: "fail",
+              message: "공유 중지 / 시작",
+            });
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  }
+};
+
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
 apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
+apiRouter.post("/shareInfo", shareInfo);
+apiRouter.post("/sharingSwitch", sharingSwitch);
+apiRouter.post("/sendShareInfo", updateShareInfo);
 
 export default apiRouter;
