@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema({
   userEmail: { type: String, required: true, trim: true },
   userBirth: { type: String },
   userPhone: { type: String, required: true, trim: true },
-  userCarNumber: { type: String, trim: true },
+  userCarNumber: [{ type: String, trim: true }],
   created: {
     type: String,
     default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),

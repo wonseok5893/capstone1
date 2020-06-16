@@ -42,10 +42,10 @@ var UserSchema = new _mongoose["default"].Schema({
     required: true,
     trim: true
   },
-  userCarNumber: {
+  userCarNumber: [{
     type: String,
     trim: true
-  },
+  }],
   created: {
     type: String,
     "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")

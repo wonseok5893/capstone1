@@ -67,7 +67,7 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
     "default": 0,
     "enum": [0, 1]
   }],
-  //월 화 수 목 금 토 일
+  //일 월 화 수 목 금 토
   filePath: {
     type: String
   },
@@ -78,6 +78,11 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
   enrollTime: {
     type: String,
     "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
+  },
+  change: {
+    type: Number,
+    "default": 0,
+    "enum": [0, 1]
   }
 });
 

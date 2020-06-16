@@ -3,11 +3,13 @@ import userRouter from "./userRouter";
 import User from "../models/User";
 import SharedLocation from "../models/SharedLocation";
 import Image from "../models/Image";
+import VisitPurpose from "../models/VisitPurpose";
 import { uploadImage } from "../multerMiddleware";
 import fs, { readSync } from "fs";
 import Notice from "../models/Notice";
 import path from "path";
 import { isError } from "util";
+import { adminCheck } from "../jwtMiddleware";
 
 const globalRouter = express.Router();
 
@@ -155,9 +157,12 @@ const allNotice = async (req, res) => {
   const notices = await Notice.find();
   res.json({ data: notices });
 };
+const adminNotice = async (req, res) => {
+  const notices = await Notice.find();
+  res.json({ data: notices });
+};
 
 const adminEditState = async (req, res) => {
-  console.log(req);
   const {
     body: { editState, userId },
   } = req;
@@ -182,13 +187,12 @@ const adminEditState = async (req, res) => {
   }
 };
 const adminEditPhone = async (req, res) => {
-  console.log(req);
   const {
     body: { editPhone, userId },
   } = req;
   //관리자 검증
   const user = await User.findOne({ userId: req.decoded.userId });
-  console.log(user);
+
   if (user.state != 1) {
     res.json({ editPhoneResult: "fail", message: "잘못된 접근입니다" });
   } else {
@@ -207,13 +211,12 @@ const adminEditPhone = async (req, res) => {
   }
 };
 const adminEditPoint = async (req, res) => {
-  console.log(req);
   const {
     body: { editPoint, userId },
   } = req;
   //관리자 검증
   const user = await User.findOne({ userId: req.decoded.userId });
-  console.log(user);
+
   if (user.state != 1) {
     res.json({ editPointResult: "fail", message: "잘못된 접근입니다" });
   } else {
@@ -238,20 +241,110 @@ const adminEditPoint = async (req, res) => {
     }
   }
 };
-
+const adminGetStatistics = async (req, res) => {
+  try {
+    const purposes = await VisitPurpose.find();
+    let data = ["외식", "쇼핑", "출장", "친구", "의료", "여행", "기타"];
+    let subData = [];
+    let dataCount = [];
+    for (var i of data) {
+      subData = purposes.filter((e) => e.category.indexOf(i) != -1);
+      console.log(subData.length);
+      dataCount.push(subData.length);
+    }
+    res.json({ data: dataCount });
+  } catch (e) {
+    console.log(e);
+    res.json({ result: "fail", message: "db오류" });
+  }
+};
+const adminDeleteNotice = async (req, res) => {
+  const {
+    body: { _id },
+  } = req;
+  try {
+    const user = await User.findOne({ userId: req.decoded.userId });
+    if (user.state != 1) {
+      res.json({ result: "fail", message: "잘못된 접근입니다" });
+    } else {
+      await Notice.findByIdAndDelete(_id, (err) => {
+        if (!err) {
+          res.json({ result: "success", message: "삭제 완료" });
+        }
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "DB 오류" });
+  }
+};
+const adminUpdateNotice = async (req, res) => {
+  const {
+    body: { _id, title, context },
+  } = req;
+  try {
+    const user = await User.findOne({ userId: req.decoded.userId });
+    if (user.state != 1) {
+      res.json({ result: "fail", message: "잘못된 접근입니다" });
+    } else {
+      await Notice.findByIdAndUpdate(
+        _id,
+        { $set: { title, description: context } },
+        (err) => {
+          if (!err) {
+            res.json({ result: "success", message: "삭제 완료" });
+          }
+        }
+      );
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "DB 오류" });
+  }
+};
+const adminAddNotice = async (req, res) => {
+  const {
+    body: { title, context },
+  } = req;
+  try {
+    const user = await User.findOne({ userId: req.decoded.userId });
+    if (user.state != 1) {
+      res.json({ result: "fail", message: "잘못된 접근입니다" });
+    } else {
+      const notice = await Notice({
+        title,
+        description: context,
+      });
+      await Notice.create(notice);
+      res.json({ result: "success", message: "공지사항 등록 완료" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "DB 오류" });
+  }
+};
 globalRouter.get("/", getHome);
 globalRouter.get("/upload", (req, res) => {
   res.render("uploadTest");
 });
 globalRouter.get("/notices", allNotice);
 globalRouter.post("/upload", uploadImage, uploadTest);
-globalRouter.post("/admin/users", getAllusers);
-globalRouter.post("/admin/allNotice", allNotice);
-globalRouter.post("/admin/sharedLocation/enroll", checkSharedLocation);
-globalRouter.post("/admin/unCheckedList", unCheckedSharedLocation);
-globalRouter.post("/admin/editPassword", adminEditPassword);
-globalRouter.post("/admin/editPhone", adminEditPhone);
-globalRouter.post("/admin/editPoint", adminEditPoint);
-globalRouter.post("/admin/editState", adminEditState);
+globalRouter.post("/admin/notices", adminNotice);
+globalRouter.post("/admin/users", adminCheck, getAllusers);
+
+globalRouter.post(
+  "/admin/sharedLocation/enroll",
+  adminCheck,
+  checkSharedLocation
+);
+globalRouter.post("/admin/unCheckedList", adminCheck, unCheckedSharedLocation);
+globalRouter.post("/admin/editPassword", adminCheck, adminEditPassword);
+globalRouter.post("/admin/editPhone", adminCheck, adminEditPhone);
+globalRouter.post("/admin/editPoint", adminCheck, adminEditPoint);
+globalRouter.post("/admin/editState", adminCheck, adminEditState);
+globalRouter.post("/admin/statistics", adminCheck, adminGetStatistics);
+globalRouter.post("/admin/deleteNotice", adminCheck, adminDeleteNotice);
+globalRouter.post("/admin/reviseNotice", adminCheck, adminUpdateNotice);
+globalRouter.post("/admin/addNotice", adminCheck, adminAddNotice);
 
 export default globalRouter;

@@ -26,7 +26,7 @@ var jwtMiddleware = /*#__PURE__*/function () {
           case 0:
             token = req.headers["x-access-token"] || req.query.token;
 
-            if (token) {
+            if (!(!token || token === "")) {
               _context.next = 5;
               break;
             }
@@ -40,8 +40,21 @@ var jwtMiddleware = /*#__PURE__*/function () {
             return _jsonwebtoken["default"].verify(token, process.env.SECRET, function (err, decoded) {
               if (!err) {
                 req.decoded = decoded;
-                console.log("세션 로그인 성공");
-                next();
+
+                if (req.decoded.userId === "wonseok") {
+                  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:192.168.0.1") {
+                    console.log("관리자 로그인 성공");
+                    next();
+                  } else {
+                    res.json({
+                      result: "fail",
+                      message: "잘못된 접근"
+                    });
+                  }
+                } else {
+                  console.log("세션 로그인 성공");
+                  next();
+                }
               } else {
                 res.status(403).json({
                   result: "fail",
@@ -66,7 +79,7 @@ var jwtMiddleware = /*#__PURE__*/function () {
 exports.jwtMiddleware = jwtMiddleware;
 
 var adminCheck = function adminCheck(req, res, next) {
-  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:222.251.129.150") next();else {
+  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:192.168.0.1") next();else {
     res.status(403).json({
       result: "fail",
       message: "잘못된 접근"

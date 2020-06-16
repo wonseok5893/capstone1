@@ -13,10 +13,12 @@ var _moment = _interopRequireDefault(require("moment"));
 
 var NoticeSchema = new _mongoose["default"].Schema({
   title: {
-    type: String
+    type: String,
+    required: true
   },
   description: {
-    type: String
+    type: String,
+    required: true
   },
   enrollTime: {
     type: String,

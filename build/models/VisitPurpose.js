@@ -11,44 +11,26 @@ var _mongoose = _interopRequireDefault(require("mongoose"));
 
 var _moment = _interopRequireDefault(require("moment"));
 
-var ReservationSchema = new _mongoose["default"].Schema({
-  client: {
+var VisitPurposeSchema = new _mongoose["default"].Schema({
+  user: {
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "User"
-  },
-  carNumber: {
-    type: String,
-    required: true
   },
   location: {
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "SharedLocation"
   },
-  startTime: {
+  category: {
     type: String,
     required: true
   },
-  endTime: {
-    type: String,
-    required: true
-  },
-  sum: {
-    type: Number,
-    required: true
-  },
-  reservationTime: {
-    type: String,
-    "default": (0, _moment["default"])().format("YYYY년 MM월 DD일 HH:mm:ss")
-  },
-  purpose: {
-    type: Number,
-    "enum": [0, 1],
-    "default": 0
+  description: {
+    type: String
   },
   id: _mongoose["default"].Schema.Types.ObjectId
 });
 
-var model = _mongoose["default"].model("Reservation", ReservationSchema);
+var model = _mongoose["default"].model("visitPurpose", VisitPurposeSchema);
 
 var _default = model;
 exports["default"] = _default;

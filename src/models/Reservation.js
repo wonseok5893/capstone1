@@ -3,15 +3,16 @@ import moment from "moment";
 
 const ReservationSchema = new mongoose.Schema({
   client: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  carNumber: { type: String },
+  carNumber: { type: String, required: true },
   location: { type: mongoose.Schema.Types.ObjectId, ref: "SharedLocation" },
-  startTime: { type: String },
-  endTime: { type: String },
-  sum: { type: Number },
+  startTime: { type: String, required: true },
+  endTime: { type: String, required: true },
+  sum: { type: Number, required: true },
   reservationTime: {
     type: String,
     default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),
   },
+  purpose: { type: Number, enum: [0, 1], default: 0 },
   id: mongoose.Schema.Types.ObjectId,
 });
 

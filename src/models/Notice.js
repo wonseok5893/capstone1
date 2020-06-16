@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import moment from "moment";
 
 const NoticeSchema = new mongoose.Schema({
-  title: { type: String },
-  description: { type: String },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
   enrollTime: {
     type: String,
     default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),
