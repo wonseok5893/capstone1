@@ -88,3 +88,8 @@ export const possibleTimeCheck = (
     result = true;
   return result;
 };
+
+export const gmtToUtc = (time1) =>
+  new Date(
+    new Date(time1).getTime() + new Date(time1).getTimezoneOffset() * 60000
+  );

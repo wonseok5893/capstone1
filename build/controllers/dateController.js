@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.possibleTimeCheck = exports.changeDay = exports.changeMonth = void 0;
+exports.gmtToUtc = exports.possibleTimeCheck = exports.changeDay = exports.changeMonth = void 0;
 
 var changeMonth = function changeMonth(date) {
   switch (date) {
@@ -110,3 +110,9 @@ var possibleTimeCheck = function possibleTimeCheck(possibleStartTime, possibleEn
 };
 
 exports.possibleTimeCheck = possibleTimeCheck;
+
+var gmtToUtc = function gmtToUtc(time1) {
+  return new Date(new Date(time1).getTime() + new Date(time1).getTimezoneOffset() * 60000);
+};
+
+exports.gmtToUtc = gmtToUtc;

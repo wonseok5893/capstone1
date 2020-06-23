@@ -67,6 +67,9 @@ var UserSchema = new _mongoose["default"].Schema({
     "default": 0,
     "enum": [0, 1]
   },
+  deviceToken: {
+    type: String
+  },
   id: _mongoose["default"].Schema.Types.ObjectId
 });
 

@@ -12,7 +12,7 @@ export const jwtMiddleware = async (req, res, next) => {
         req.decoded = decoded;
         if (req.decoded.userId === "wonseok") {
           if (
-            req.connection.remoteAddress === "::ffff:175.119.165.7" ||
+            req.connection.remoteAddress === "::ffff:211.109.206.188" ||
             req.connection.remoteAddress === "::ffff:192.168.0.1"
           ) {
             console.log("관리자 로그인 성공");
@@ -39,7 +39,7 @@ export const jwtMiddleware = async (req, res, next) => {
 
 export const adminCheck = (req, res, next) => {
   if (
-    req.connection.remoteAddress === "::ffff:175.119.165.7" ||
+    req.connection.remoteAddress === "::ffff:211.109.206.188" ||
     req.connection.remoteAddress === "::ffff:192.168.0.1"
   )
     next();

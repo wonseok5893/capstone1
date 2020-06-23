@@ -31,11 +31,19 @@ var _fs = _interopRequireWildcard(require("fs"));
 
 var _Notice = _interopRequireDefault(require("../models/Notice"));
 
+var _pushAlarm = require("../pushAlarm");
+
 var _path = _interopRequireDefault(require("path"));
 
 var _util = require("util");
 
 var _jwtMiddleware = require("../jwtMiddleware");
+
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 var globalRouter = _express["default"].Router();
 
@@ -877,7 +885,7 @@ var adminUpdateNotice = /*#__PURE__*/function () {
 
 var adminAddNotice = /*#__PURE__*/function () {
   var _ref14 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee14(req, res) {
-    var _req$body7, title, context, user, notice;
+    var _req$body7, title, context, user, notice, _user, _iterator, _step, e;
 
     return _regenerator["default"].wrap(function _callee14$(_context14) {
       while (1) {
@@ -902,7 +910,7 @@ var adminAddNotice = /*#__PURE__*/function () {
               result: "fail",
               message: "잘못된 접근입니다"
             });
-            _context14.next = 15;
+            _context14.next = 20;
             break;
 
           case 9:
@@ -918,17 +926,35 @@ var adminAddNotice = /*#__PURE__*/function () {
             return _Notice["default"].create(notice);
 
           case 14:
+            _context14.next = 16;
+            return _User["default"].find();
+
+          case 16:
+            _user = _context14.sent;
+            _iterator = _createForOfIteratorHelper(_user);
+
+            try {
+              for (_iterator.s(); !(_step = _iterator.n()).done;) {
+                e = _step.value;
+                (0, _pushAlarm.sendMessage)(e.deviceToken, "\uACF5\uC9C0\uC0AC\uD56D ".concat(title), context.slice(0, 26));
+              }
+            } catch (err) {
+              _iterator.e(err);
+            } finally {
+              _iterator.f();
+            }
+
             res.json({
               result: "success",
               message: "공지사항 등록 완료"
             });
 
-          case 15:
-            _context14.next = 21;
+          case 20:
+            _context14.next = 26;
             break;
 
-          case 17:
-            _context14.prev = 17;
+          case 22:
+            _context14.prev = 22;
             _context14.t0 = _context14["catch"](1);
             console.log(_context14.t0);
             res.json({
@@ -936,12 +962,12 @@ var adminAddNotice = /*#__PURE__*/function () {
               message: "DB 오류"
             });
 
-          case 21:
+          case 26:
           case "end":
             return _context14.stop();
         }
       }
-    }, _callee14, null, [[1, 17]]);
+    }, _callee14, null, [[1, 22]]);
   }));
 
   return function adminAddNotice(_x27, _x28) {

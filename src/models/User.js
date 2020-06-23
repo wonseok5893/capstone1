@@ -26,6 +26,7 @@ const UserSchema = new mongoose.Schema({
     ref: "SharedLocation",
   },
   state: { type: Number, default: 0, enum: [0, 1] },
+  deviceToken: { type: String },
   id: mongoose.Schema.Types.ObjectId,
 });
 

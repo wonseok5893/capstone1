@@ -6,6 +6,8 @@ import path from "path";
 import SharedLocation from "../models/SharedLocation";
 import Reservation from "../models/Reservation";
 import VisitPurpose from "../models/VisitPurpose";
+import { sendMessage } from "../pushAlarm";
+
 import e from "express";
 import { count } from "console";
 const userRouter = express.Router();
@@ -13,20 +15,19 @@ const userRouter = express.Router();
 export const postLogin = async (req, res) => {
   if (!req.decoded) {
     const {
-      body: { userId, userPassword },
+      body: { userId, userPassword, deviceToken },
     } = req;
     //SERCRET
     const secret = req.app.get("jwt-secret");
     const user = await User.findOne({ userId });
+    console.log(req);
     if (user) {
-      console.log(user);
-
       if (user.userId === userId && user.userPassword === userPassword) {
         //관리자 검증
         if (user.userId === "wonseok") {
           console.log(req.connection.remoteAddress);
           if (
-            req.connection.remoteAddress === "::ffff:175.119.165.7" ||
+            req.connection.remoteAddress === "::ffff:211.109.206.188" ||
             req.connection.remoteAddress === "::ffff:192.168.0.1"
           ) {
             console.log("관리자 로그인 성공");
@@ -52,6 +53,23 @@ export const postLogin = async (req, res) => {
           (err, token) => {
             if (!err) {
               console.log("로그인 성공");
+              if (user.deviceToken) {
+                if (user.deviceToken != deviceToken) {
+                  user.deviceToken = deviceToken;
+                  user.save((e) => {
+                    if (!e) {
+                      console.log("디바이스 토큰 변경 완료");
+                    }
+                  });
+                }
+              } else {
+                user.deviceToken = deviceToken;
+                user.save((e) => {
+                  if (!e) {
+                    console.log("디바이스 토큰 생성 완료");
+                  }
+                });
+              }
               res.json({
                 result: "success",
                 message: `${userId}로 로그인 성공`,
@@ -76,7 +94,7 @@ export const postLogin = async (req, res) => {
 export const postJoin = async (req, res) => {
   console.log(req);
   const {
-    body: { userId, userPassword, userName, userEmail, userPhone },
+    body: { userId, userPassword, userName, userEmail, userPhone, deviceToken },
   } = req;
   try {
     const userIdCheck = await User.findOne({ userId });
@@ -92,6 +110,7 @@ export const postJoin = async (req, res) => {
         userPhone,
       });
       await User.create(user);
+
       res.json({ result: "success", message: "회원가입 성공" });
     }
   } catch (error) {
@@ -310,7 +329,7 @@ const postVisitPurpose = async (req, res) => {
   } = req;
   try {
     const reservation = await Reservation.findOne({ _id }).select(
-      "purpose location"
+      "purpose location sum"
     );
 
     const purpose = await VisitPurpose({
@@ -326,7 +345,7 @@ const postVisitPurpose = async (req, res) => {
       if (req.decoded) {
         const user = await User.findOne({ userId: req.decoded.userId });
         purpose.user = user._id;
-        user.point += 100;
+        user.point += +reservation.sum / 20;
         await user.save();
       }
       await VisitPurpose.create(purpose);
@@ -341,16 +360,92 @@ const postVisitPurpose = async (req, res) => {
     res.json({ result: "fail", message: "DB저장 오류" });
   }
 };
+
+const notUserReservation = async (req, res) => {
+  const {
+    body: { phoneNumber },
+  } = req;
+  try {
+    const reservationList = await Reservation.find({
+      notUserPhoneNumber: phoneNumber,
+    })
+      .select(
+        "_id location carNumber notUserPhoneNumber notUserName startTime endTime sum location"
+      )
+      .populate({ path: "location", select: "parkingInfo" });
+
+    let data = reservationList.filter(
+      (e) => new Date(e.startTime).getTime() >= new Date().getTime()
+    );
+    if (data.length == 0)
+      res.json({ result: "fail", message: "해당하는 예약이 없습니다" });
+    else res.json({ result: "success", data: data });
+  } catch (e) {
+    console.log(e);
+    res.json({ result: "fail", message: "DB 오류" });
+  }
+};
+const mySharedResrvations = async (req, res) => {
+  if (!req.decoded) {
+    res.status(403).json({ result: "fail", message: "잘못된 접근입니다" });
+  } else {
+    try {
+      const user = await User.findOne({ _id: req.decoded._id });
+      if (user.sharingParkingLot) {
+        const sharedLocation = await SharedLocation.findOne({
+          _id: user.sharingParkingLot,
+        }).populate({
+          path: "reservationList",
+          select: "_id startTime endTime carNumber notUserPhoneNumber",
+        });
+
+        sharedLocation.reservationList.sort(
+          (a, b) =>
+            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+
+        let data = [];
+        for (var e of sharedLocation.reservationList) {
+          console.log(new Date(e.startTime).getTime());
+          let reservationData = {};
+          reservationData.startTime = e.startTime;
+          reservationData.endTime = e.endTime;
+          reservationData.carNumber = e.carNumber;
+          if (!e.notUserPhoneNumber) {
+            const reservation = await Reservation.findOne({
+              _id: e._id,
+            }).populate({
+              path: "client",
+              select: "userPhone",
+            });
+            reservationData.phoneNumber = reservation.client.userPhone;
+          } else {
+            reservationData.phoneNumber = e.notUserPhoneNumber;
+          }
+          data.push(reservationData);
+        }
+        res.json({ result: "success", data });
+      } else {
+        res.json({ result: "fail", message: "공유를 먼저해주세요" });
+      }
+    } catch (err) {
+      console.log(err);
+      res.josn({ result: "fail", message: "db 오류" });
+    }
+  }
+};
 userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
 userRouter.post("/myReservation", myReservationList);
+userRouter.post("/notUser/reservation", notUserReservation);
 userRouter.post("/carEnroll", userCarEnroll);
 userRouter.post("/carDelete", userCarDelete);
 userRouter.post("/chargePoint", chargePoint);
 userRouter.post("/deleteReservation", deleteReservation);
 userRouter.post("/visitPurpose", postVisitPurpose);
+userRouter.post("/mySharingParkingLot", mySharedResrvations);
 
 export default userRouter;

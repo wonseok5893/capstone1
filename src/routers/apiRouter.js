@@ -159,7 +159,7 @@ const reservationEnroll = async (req, res) => {
       if (user.point < +point) moneyResult = false;
 
       if (
-        sharedLocation.timeState[changeDay(startTime.slice(0, 3))] == 0 &&
+        sharedLocation.timeState[changeDay(startTime.slice(0, 3))] == 0 ||
         sharedLocation.timeState[changeDay(endTime.slice(0, 3))] == 0
       )
         sharedResult = false;
@@ -384,19 +384,39 @@ const sharingSwitch = async function (req, res) {
       } else {
         const location = await SharedLocation.findOne({
           _id: user.sharingParkingLot,
-        });
+        }).populate({ path: "reservationList", select: "startTime endTime" });
+        let SwitchOffResult = true;
+        let reservations = location.reservationList.filter(
+          (e) =>
+            e.startTime.slice(8, 10) == moment().format("DD") &&
+            changeMonth(e.startTime.slice(4, 7)) == moment().format("MM")
+        );
+        for (var e of reservations) {
+          console.log(e);
+          if (new Date().getTime() <= new Date(e.endTime).getTime())
+            SwitchOffResult = false;
+        }
         const todayIndex = changeDay(moment().format("ddd"));
-        console.log(location.timeState);
+
         if (turn == 1) {
           location.timeState.set(todayIndex, 1);
         } else if (turn == 0) {
-          location.timeState.set(todayIndex, 0);
+          if (SwitchOffResult == true) location.timeState.set(todayIndex, 0);
+          else {
+            res.json({
+              result: "fail",
+              message: "현재 예약이 있으므로 공유 중지 불가",
+            });
+            return;
+          }
         }
         location.save((err) => {
           if (err) {
+            console.log(err);
           } else {
-            console.log(location.timeState);
-            res.json({ result: "success", message: "공유 On/Off" });
+            if (turn == 0) res.json({ result: "success", message: "공유 Off" });
+            else if (turn == 1)
+              res.json({ result: "success", message: "공유 On" });
           }
         });
       }
@@ -414,9 +434,238 @@ const locationInfo = async function (req, res) {
   );
   res.json({ locationInfo: locationInfo });
 };
+
+const notUserReservationEnroll = async (req, res) => {
+  console.log(req);
+  const {
+    body: {
+      _id,
+      carNumber,
+      startTime,
+      endTime,
+      phoneNumber,
+      name,
+      sum,
+      deviceToken,
+    },
+  } = req;
+
+  try {
+    const reservation = await Reservation({
+      location: _id,
+      carNumber,
+      notUserPhoneNumber: phoneNumber,
+      notUserName: name,
+      startTime,
+      endTime,
+      sum,
+      notUserDeviceToken: deviceToken,
+    });
+
+    const sharedLocation = await SharedLocation.findOne({ _id }).populate({
+      path: "reservationList",
+      select: "startTime endTime",
+    });
+
+    let sharedResult = true;
+    let result = true;
+
+    if (
+      sharedLocation.timeState[changeDay(startTime.slice(0, 3))] == 0 ||
+      sharedLocation.timeState[changeDay(endTime.slice(0, 3))] == 0
+    )
+      sharedResult = false;
+
+    for (var e of sharedLocation.reservationList) {
+      if (
+        new Date(e.startTime).getTime() <
+          new Date(reservation.endTime).getTime() &&
+        new Date(reservation.endTime).getTime() < new Date(e.endTime).getTime()
+      )
+        result = false;
+      else if (
+        new Date(e.startTime).getTime() <
+          new Date(reservation.startTime).getTime() &&
+        new Date(reservation.startTime).getTime() <
+          new Date(e.endTime).getTime()
+      )
+        result = false;
+    }
+
+    if (sharedResult == false) {
+      res.json({
+        result: "fail",
+        message: "해당 주차장은 오늘 공유가 종료되었습니다.",
+      });
+    } else {
+      if (
+        possibleTimeCheck(
+          sharedLocation.possibleStartTime,
+          sharedLocation.possibleEndTime,
+          reservation.startTime,
+          reservation.endTime
+        ) == false
+      )
+        res.json({ result: "fail", message: "가능한 시간대가 아닙니다." });
+      else {
+        if (result == false) {
+          res.json({
+            result: "fail",
+            message: "해당 시간은 예약이 되어 있습니다.",
+          });
+        } else {
+          const createdReservation = await Reservation.create(reservation);
+
+          createdReservation.save((err) => {
+            if (err) {
+              res.json({
+                result: "fail",
+                message: "예약에 소유자 등록 실패",
+              });
+            }
+          });
+          sharedLocation.reservationList.push(createdReservation._id);
+          sharedLocation.save((err) => {
+            if (err)
+              res.json({
+                result: "fail",
+                message: "배정지 예약 리스트 등록 실패",
+              });
+          });
+          res.json({ result: "success", message: "예약 완료 되었습니다." });
+        }
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "사용자 등록 DB ERROR" });
+  }
+};
+
+const changeLocation = async (req, res) => {
+  const {
+    body: { _id },
+  } = req;
+  try {
+    const reservation = await Reservation.findOne({ _id }).populate({
+      path: "location",
+      select: "latitude longitude",
+    });
+    if (!reservation) {
+      res.json({ result: "fail", message: "존재하지 않는 예약입니다." });
+    }
+    const lat = +reservation.location.latitude;
+    const long = +reservation.location.longitude;
+
+    const locations = await SharedLocation.find({});
+
+    locations.sort(
+      (a, b) =>
+        Math.pow(+a.latitude - lat, 2) +
+        Math.pow(+a.longitude - long, 2) -
+        (Math.pow(+b.latitude - lat, 2) + Math.pow(+b.longitude - long, 2))
+    );
+    //자기 예약 뺴고
+    locations.shift();
+    let result = true;
+    for (var e of locations) {
+      let possibleResult = true;
+      if (
+        possibleTimeCheck(
+          e.possibleStartTime,
+          e.possibleEndTime,
+          reservation.startTime,
+          reservation.endTime
+        ) == false
+      )
+        possibleResult = false;
+
+      if (
+        e.timeState[changeDay(reservation.startTime.slice(0, 3))] == 0 ||
+        e.timeState[changeDay(reservation.endTime.slice(0, 3))] == 0
+      )
+        possibleResult = false;
+
+      for (var i of e.reservationList) {
+        if (
+          new Date(i.startTime).getTime() <
+            new Date(reservation.endTime).getTime() &&
+          new Date(reservation.endTime).getTime() <
+            new Date(i.endTime).getTime()
+        )
+          possibleResult = false;
+        else if (
+          new Date(i.startTime).getTime() <
+            new Date(reservation.startTime).getTime() &&
+          new Date(reservation.startTime).getTime() <
+            new Date(i.endTime).getTime()
+        )
+          possibleResult = false;
+      }
+
+      result = possibleResult;
+
+      if (result == true) {
+        res.json({
+          result: "success",
+          _id: e._id,
+          parkingInfo: e.parkingInfo,
+          location: e.location,
+          latitude: e.latitude,
+          longitude: e.longitude,
+        });
+        break;
+      }
+    }
+    if (result == false)
+      res.json({
+        result: "fail",
+        message: "주변에 바꿔드릴 장소가 없습니다. 죄송합니다",
+      });
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "DB 오류 " });
+  }
+};
+const changeReservation = async (req, res) => {
+  const {
+    body: { _id, locationId },
+  } = req;
+  const reservation = await (
+    await Reservation.findOne({ _id: reservationId })
+  ).populate({ path: "location", select: "_id" });
+  if (reservation.client) {
+    //회원
+    try {
+      const location = await SharedLocation.findOne({
+        _id: reservation.location._id,
+      });
+      const changedLocation = await SharedLocation.findOne({
+        _id: locationId,
+      });
+      reservation.location = locationId;
+      location.reservationList.pull(reservationId);
+      changedLocation.reservationList.push(reservationId);
+      reservation.save((e) =>
+        res.json({ result: "fail", message: "예약 위치 변경 실패" })
+      );
+      location.save((e) =>
+        res.json({ result: "fail", message: "기존 위치에 예약 삭제" })
+      );
+      changedLocation.save((e) =>
+        res.json({ result: "fail", message: "변경할 위치에 예약 등록 실패" })
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  } else {
+    //비회원
+  }
+};
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
+apiRouter.post("/reservation/notUser/enroll", notUserReservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
 apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
@@ -424,5 +673,7 @@ apiRouter.get("/locationInfo", locationInfo);
 apiRouter.post("/shareInfo", shareInfo);
 apiRouter.post("/sharingSwitch", sharingSwitch);
 apiRouter.post("/sendShareInfo", updateShareInfo);
+apiRouter.post("/illegal/change", changeLocation);
+apiRouter.post("/illegal/changeReservation", changeReservation);
 
 export default apiRouter;

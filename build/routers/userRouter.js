@@ -29,6 +29,8 @@ var _Reservation = _interopRequireDefault(require("../models/Reservation"));
 
 var _VisitPurpose = _interopRequireDefault(require("../models/VisitPurpose"));
 
+var _pushAlarm = require("../pushAlarm");
+
 var _console = require("console");
 
 function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -41,18 +43,18 @@ var userRouter = _express["default"].Router();
 
 var postLogin = /*#__PURE__*/function () {
   var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(req, res) {
-    var _req$body, userId, userPassword, secret, user;
+    var _req$body, userId, userPassword, deviceToken, secret, user;
 
     return _regenerator["default"].wrap(function _callee$(_context) {
       while (1) {
         switch (_context.prev = _context.next) {
           case 0:
             if (req.decoded) {
-              _context.next = 9;
+              _context.next = 10;
               break;
             }
 
-            _req$body = req.body, userId = _req$body.userId, userPassword = _req$body.userPassword; //SERCRET
+            _req$body = req.body, userId = _req$body.userId, userPassword = _req$body.userPassword, deviceToken = _req$body.deviceToken; //SERCRET
 
             secret = req.app.get("jwt-secret");
             _context.next = 5;
@@ -62,16 +64,15 @@ var postLogin = /*#__PURE__*/function () {
 
           case 5:
             user = _context.sent;
+            console.log(req);
 
             if (user) {
-              console.log(user);
-
               if (user.userId === userId && user.userPassword === userPassword) {
                 //관리자 검증
                 if (user.userId === "wonseok") {
                   console.log(req.connection.remoteAddress);
 
-                  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:192.168.0.1") {
+                  if (req.connection.remoteAddress === "::ffff:211.109.206.188" || req.connection.remoteAddress === "::ffff:192.168.0.1") {
                     console.log("관리자 로그인 성공");
                   } else {
                     res.json({
@@ -93,6 +94,25 @@ var postLogin = /*#__PURE__*/function () {
                 }, function (err, token) {
                   if (!err) {
                     console.log("로그인 성공");
+
+                    if (user.deviceToken) {
+                      if (user.deviceToken != deviceToken) {
+                        user.deviceToken = deviceToken;
+                        user.save(function (e) {
+                          if (!e) {
+                            console.log("디바이스 토큰 변경 완료");
+                          }
+                        });
+                      }
+                    } else {
+                      user.deviceToken = deviceToken;
+                      user.save(function (e) {
+                        if (!e) {
+                          console.log("디바이스 토큰 생성 완료");
+                        }
+                      });
+                    }
+
                     res.json({
                       result: "success",
                       message: "".concat(userId, "\uB85C \uB85C\uADF8\uC778 \uC131\uACF5"),
@@ -108,17 +128,17 @@ var postLogin = /*#__PURE__*/function () {
               }
             }
 
-            _context.next = 11;
+            _context.next = 12;
             break;
 
-          case 9:
+          case 10:
             console.log(req.user);
             res.json({
               result: "success",
               message: "자동 로그인 성공"
             });
 
-          case 11:
+          case 12:
           case "end":
             return _context.stop();
         }
@@ -135,14 +155,14 @@ exports.postLogin = postLogin;
 
 var postJoin = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body2, userId, userPassword, userName, userEmail, userPhone, userIdCheck, user;
+    var _req$body2, userId, userPassword, userName, userEmail, userPhone, deviceToken, userIdCheck, user;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             console.log(req);
-            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone;
+            _req$body2 = req.body, userId = _req$body2.userId, userPassword = _req$body2.userPassword, userName = _req$body2.userName, userEmail = _req$body2.userEmail, userPhone = _req$body2.userPhone, deviceToken = _req$body2.deviceToken;
             _context2.prev = 2;
             _context2.next = 5;
             return _User["default"].findOne({
@@ -726,7 +746,7 @@ var postVisitPurpose = /*#__PURE__*/function () {
             _context10.next = 5;
             return _Reservation["default"].findOne({
               _id: _id
-            }).select("purpose location");
+            }).select("purpose location sum");
 
           case 5:
             reservation = _context10.sent;
@@ -768,7 +788,7 @@ var postVisitPurpose = /*#__PURE__*/function () {
           case 18:
             user = _context10.sent;
             purpose.user = user._id;
-            user.point += 100;
+            user.point += +reservation.sum / 20;
             _context10.next = 23;
             return user.save();
 
@@ -812,16 +832,225 @@ var postVisitPurpose = /*#__PURE__*/function () {
   };
 }();
 
+var notUserReservation = /*#__PURE__*/function () {
+  var _ref11 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(req, res) {
+    var phoneNumber, reservationList, data;
+    return _regenerator["default"].wrap(function _callee11$(_context11) {
+      while (1) {
+        switch (_context11.prev = _context11.next) {
+          case 0:
+            phoneNumber = req.body.phoneNumber;
+            _context11.prev = 1;
+            _context11.next = 4;
+            return _Reservation["default"].find({
+              notUserPhoneNumber: phoneNumber
+            }).select("_id location carNumber notUserPhoneNumber notUserName startTime endTime sum location").populate({
+              path: "location",
+              select: "parkingInfo"
+            });
+
+          case 4:
+            reservationList = _context11.sent;
+            data = reservationList.filter(function (e) {
+              return new Date(e.startTime).getTime() >= new Date().getTime();
+            });
+            if (data.length == 0) res.json({
+              result: "fail",
+              message: "해당하는 예약이 없습니다"
+            });else res.json({
+              result: "success",
+              data: data
+            });
+            _context11.next = 13;
+            break;
+
+          case 9:
+            _context11.prev = 9;
+            _context11.t0 = _context11["catch"](1);
+            console.log(_context11.t0);
+            res.json({
+              result: "fail",
+              message: "DB 오류"
+            });
+
+          case 13:
+          case "end":
+            return _context11.stop();
+        }
+      }
+    }, _callee11, null, [[1, 9]]);
+  }));
+
+  return function notUserReservation(_x21, _x22) {
+    return _ref11.apply(this, arguments);
+  };
+}();
+
+var mySharedResrvations = /*#__PURE__*/function () {
+  var _ref12 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee12(req, res) {
+    var user, sharedLocation, data, _iterator2, _step2, e, reservationData, reservation;
+
+    return _regenerator["default"].wrap(function _callee12$(_context12) {
+      while (1) {
+        switch (_context12.prev = _context12.next) {
+          case 0:
+            if (req.decoded) {
+              _context12.next = 4;
+              break;
+            }
+
+            res.status(403).json({
+              result: "fail",
+              message: "잘못된 접근입니다"
+            });
+            _context12.next = 53;
+            break;
+
+          case 4:
+            _context12.prev = 4;
+            _context12.next = 7;
+            return _User["default"].findOne({
+              _id: req.decoded._id
+            });
+
+          case 7:
+            user = _context12.sent;
+
+            if (!user.sharingParkingLot) {
+              _context12.next = 46;
+              break;
+            }
+
+            _context12.next = 11;
+            return _SharedLocation["default"].findOne({
+              _id: user.sharingParkingLot
+            }).populate({
+              path: "reservationList",
+              select: "_id startTime endTime carNumber notUserPhoneNumber"
+            });
+
+          case 11:
+            sharedLocation = _context12.sent;
+            sharedLocation.reservationList.sort(function (a, b) {
+              return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+            });
+            data = [];
+            _iterator2 = _createForOfIteratorHelper(sharedLocation.reservationList);
+            _context12.prev = 15;
+
+            _iterator2.s();
+
+          case 17:
+            if ((_step2 = _iterator2.n()).done) {
+              _context12.next = 35;
+              break;
+            }
+
+            e = _step2.value;
+            console.log(new Date(e.startTime).getTime());
+            reservationData = {};
+            reservationData.startTime = e.startTime;
+            reservationData.endTime = e.endTime;
+            reservationData.carNumber = e.carNumber;
+
+            if (e.notUserPhoneNumber) {
+              _context12.next = 31;
+              break;
+            }
+
+            _context12.next = 27;
+            return _Reservation["default"].findOne({
+              _id: e._id
+            }).populate({
+              path: "client",
+              select: "userPhone"
+            });
+
+          case 27:
+            reservation = _context12.sent;
+            reservationData.phoneNumber = reservation.client.userPhone;
+            _context12.next = 32;
+            break;
+
+          case 31:
+            reservationData.phoneNumber = e.notUserPhoneNumber;
+
+          case 32:
+            data.push(reservationData);
+
+          case 33:
+            _context12.next = 17;
+            break;
+
+          case 35:
+            _context12.next = 40;
+            break;
+
+          case 37:
+            _context12.prev = 37;
+            _context12.t0 = _context12["catch"](15);
+
+            _iterator2.e(_context12.t0);
+
+          case 40:
+            _context12.prev = 40;
+
+            _iterator2.f();
+
+            return _context12.finish(40);
+
+          case 43:
+            res.json({
+              result: "success",
+              data: data
+            });
+            _context12.next = 47;
+            break;
+
+          case 46:
+            res.json({
+              result: "fail",
+              message: "공유를 먼저해주세요"
+            });
+
+          case 47:
+            _context12.next = 53;
+            break;
+
+          case 49:
+            _context12.prev = 49;
+            _context12.t1 = _context12["catch"](4);
+            console.log(_context12.t1);
+            res.josn({
+              result: "fail",
+              message: "db 오류"
+            });
+
+          case 53:
+          case "end":
+            return _context12.stop();
+        }
+      }
+    }, _callee12, null, [[4, 49], [15, 37, 40, 43]]);
+  }));
+
+  return function mySharedResrvations(_x23, _x24) {
+    return _ref12.apply(this, arguments);
+  };
+}();
+
 userRouter.post("/imageTest", getImage);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);
 userRouter.post("/editPassword", changePassword);
 userRouter.post("/myReservation", myReservationList);
+userRouter.post("/notUser/reservation", notUserReservation);
 userRouter.post("/carEnroll", userCarEnroll);
 userRouter.post("/carDelete", userCarDelete);
 userRouter.post("/chargePoint", chargePoint);
 userRouter.post("/deleteReservation", deleteReservation);
 userRouter.post("/visitPurpose", postVisitPurpose);
+userRouter.post("/mySharingParkingLot", mySharedResrvations);
 var _default = userRouter;
 exports["default"] = _default;

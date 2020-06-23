@@ -7,6 +7,7 @@ import VisitPurpose from "../models/VisitPurpose";
 import { uploadImage } from "../multerMiddleware";
 import fs, { readSync } from "fs";
 import Notice from "../models/Notice";
+import { sendMessage } from "../pushAlarm";
 import path from "path";
 import { isError } from "util";
 import { adminCheck } from "../jwtMiddleware";
@@ -316,6 +317,10 @@ const adminAddNotice = async (req, res) => {
         description: context,
       });
       await Notice.create(notice);
+      const user = await User.find();
+      for (var e of user) {
+        sendMessage(e.deviceToken, `공지사항 ${title}`, context.slice(0, 26));
+      }
       res.json({ result: "success", message: "공지사항 등록 완료" });
     }
   } catch (err) {
@@ -337,6 +342,7 @@ globalRouter.post(
   adminCheck,
   checkSharedLocation
 );
+
 globalRouter.post("/admin/unCheckedList", adminCheck, unCheckedSharedLocation);
 globalRouter.post("/admin/editPassword", adminCheck, adminEditPassword);
 globalRouter.post("/admin/editPhone", adminCheck, adminEditPhone);

@@ -42,7 +42,7 @@ var jwtMiddleware = /*#__PURE__*/function () {
                 req.decoded = decoded;
 
                 if (req.decoded.userId === "wonseok") {
-                  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:192.168.0.1") {
+                  if (req.connection.remoteAddress === "::ffff:211.109.206.188" || req.connection.remoteAddress === "::ffff:192.168.0.1") {
                     console.log("관리자 로그인 성공");
                     next();
                   } else {
@@ -79,7 +79,7 @@ var jwtMiddleware = /*#__PURE__*/function () {
 exports.jwtMiddleware = jwtMiddleware;
 
 var adminCheck = function adminCheck(req, res, next) {
-  if (req.connection.remoteAddress === "::ffff:175.119.165.7" || req.connection.remoteAddress === "::ffff:192.168.0.1") next();else {
+  if (req.connection.remoteAddress === "::ffff:211.109.206.188" || req.connection.remoteAddress === "::ffff:192.168.0.1") next();else {
     res.status(403).json({
       result: "fail",
       message: "잘못된 접근"

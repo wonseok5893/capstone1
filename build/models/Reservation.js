@@ -24,6 +24,15 @@ var ReservationSchema = new _mongoose["default"].Schema({
     type: _mongoose["default"].Schema.Types.ObjectId,
     ref: "SharedLocation"
   },
+  notUserPhoneNumber: {
+    type: String
+  },
+  notUserName: {
+    type: String
+  },
+  notUserDeviceToken: {
+    type: String
+  },
   startTime: {
     type: String,
     required: true

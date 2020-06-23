@@ -335,7 +335,7 @@ var reservationEnroll = /*#__PURE__*/function () {
             sharedResult = true;
             result = true;
             if (user.point < +point) moneyResult = false;
-            if (sharedLocation.timeState[(0, _dateController.changeDay)(startTime.slice(0, 3))] == 0 && sharedLocation.timeState[(0, _dateController.changeDay)(endTime.slice(0, 3))] == 0) sharedResult = false;
+            if (sharedLocation.timeState[(0, _dateController.changeDay)(startTime.slice(0, 3))] == 0 || sharedLocation.timeState[(0, _dateController.changeDay)(endTime.slice(0, 3))] == 0) sharedResult = false;
             _iterator = _createForOfIteratorHelper(sharedLocation.reservationList);
 
             try {
@@ -748,7 +748,8 @@ var updateShareInfo = /*#__PURE__*/function () {
 
 var sharingSwitch = /*#__PURE__*/function () {
   var _ref8 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee8(req, res) {
-    var turn, user, location, todayIndex;
+    var turn, user, location, SwitchOffResult, reservations, _iterator3, _step3, e, todayIndex;
+
     return _regenerator["default"].wrap(function _callee8$(_context8) {
       while (1) {
         switch (_context8.prev = _context8.next) {
@@ -764,7 +765,7 @@ var sharingSwitch = /*#__PURE__*/function () {
               result: "fail",
               message: "잘못된 접근입니다."
             });
-            _context8.next = 25;
+            _context8.next = 38;
             break;
 
           case 5:
@@ -786,51 +787,101 @@ var sharingSwitch = /*#__PURE__*/function () {
               result: "fail",
               message: "주차장을 먼저 공유하세요."
             });
-            _context8.next = 20;
+            _context8.next = 33;
             break;
 
           case 13:
             _context8.next = 15;
             return _SharedLocation["default"].findOne({
               _id: user.sharingParkingLot
+            }).populate({
+              path: "reservationList",
+              select: "startTime endTime"
             });
 
           case 15:
             location = _context8.sent;
-            todayIndex = (0, _dateController.changeDay)((0, _moment["default"])().format("ddd"));
-            console.log(location.timeState);
+            SwitchOffResult = true;
+            reservations = location.reservationList.filter(function (e) {
+              return e.startTime.slice(8, 10) == (0, _moment["default"])().format("DD") && (0, _dateController.changeMonth)(e.startTime.slice(4, 7)) == (0, _moment["default"])().format("MM");
+            });
+            _iterator3 = _createForOfIteratorHelper(reservations);
 
-            if (turn == 1) {
-              location.timeState.set(todayIndex, 1);
-            } else if (turn == 0) {
-              location.timeState.set(todayIndex, 0);
+            try {
+              for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+                e = _step3.value;
+                console.log(e);
+                if (new Date().getTime() <= new Date(e.endTime).getTime()) SwitchOffResult = false;
+              }
+            } catch (err) {
+              _iterator3.e(err);
+            } finally {
+              _iterator3.f();
             }
 
+            todayIndex = (0, _dateController.changeDay)((0, _moment["default"])().format("ddd"));
+
+            if (!(turn == 1)) {
+              _context8.next = 25;
+              break;
+            }
+
+            location.timeState.set(todayIndex, 1);
+            _context8.next = 32;
+            break;
+
+          case 25:
+            if (!(turn == 0)) {
+              _context8.next = 32;
+              break;
+            }
+
+            if (!(SwitchOffResult == true)) {
+              _context8.next = 30;
+              break;
+            }
+
+            location.timeState.set(todayIndex, 0);
+            _context8.next = 32;
+            break;
+
+          case 30:
+            res.json({
+              result: "fail",
+              message: "현재 예약이 있으므로 공유 중지 불가"
+            });
+            return _context8.abrupt("return");
+
+          case 32:
             location.save(function (err) {
-              if (err) {} else {
-                console.log(location.timeState);
-                res.json({
+              if (err) {
+                console.log(err);
+              } else {
+                if (turn == 0) res.json({
                   result: "success",
-                  message: "공유 On/Off"
+                  message: "공유 Off"
+                });else if (turn == 1) res.json({
+                  result: "success",
+                  message: "공유 On"
                 });
               }
             });
 
-          case 20:
-            _context8.next = 25;
+          case 33:
+            _context8.next = 38;
             break;
 
-          case 22:
-            _context8.prev = 22;
+          case 35:
+            _context8.prev = 35;
             _context8.t0 = _context8["catch"](5);
             console.log(_context8.t0);
 
-          case 25:
+          case 38:
           case "end":
             return _context8.stop();
         }
       }
-    }, _callee8, null, [[5, 22]]);
+    }, _callee8, null, [[5, 35]]);
   }));
 
   return function sharingSwitch(_x15, _x16) {
@@ -870,9 +921,378 @@ var locationInfo = /*#__PURE__*/function () {
   };
 }();
 
+var notUserReservationEnroll = /*#__PURE__*/function () {
+  var _ref10 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee10(req, res) {
+    var _req$body4, _id, carNumber, startTime, endTime, phoneNumber, name, sum, deviceToken, reservation, sharedLocation, sharedResult, result, _iterator4, _step4, e, createdReservation;
+
+    return _regenerator["default"].wrap(function _callee10$(_context10) {
+      while (1) {
+        switch (_context10.prev = _context10.next) {
+          case 0:
+            console.log(req);
+            _req$body4 = req.body, _id = _req$body4._id, carNumber = _req$body4.carNumber, startTime = _req$body4.startTime, endTime = _req$body4.endTime, phoneNumber = _req$body4.phoneNumber, name = _req$body4.name, sum = _req$body4.sum, deviceToken = _req$body4.deviceToken;
+            _context10.prev = 2;
+            _context10.next = 5;
+            return (0, _Reservation["default"])({
+              location: _id,
+              carNumber: carNumber,
+              notUserPhoneNumber: phoneNumber,
+              notUserName: name,
+              startTime: startTime,
+              endTime: endTime,
+              sum: sum,
+              notUserDeviceToken: deviceToken
+            });
+
+          case 5:
+            reservation = _context10.sent;
+            _context10.next = 8;
+            return _SharedLocation["default"].findOne({
+              _id: _id
+            }).populate({
+              path: "reservationList",
+              select: "startTime endTime"
+            });
+
+          case 8:
+            sharedLocation = _context10.sent;
+            sharedResult = true;
+            result = true;
+            if (sharedLocation.timeState[(0, _dateController.changeDay)(startTime.slice(0, 3))] == 0 || sharedLocation.timeState[(0, _dateController.changeDay)(endTime.slice(0, 3))] == 0) sharedResult = false;
+            _iterator4 = _createForOfIteratorHelper(sharedLocation.reservationList);
+
+            try {
+              for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+                e = _step4.value;
+                if (new Date(e.startTime).getTime() < new Date(reservation.endTime).getTime() && new Date(reservation.endTime).getTime() < new Date(e.endTime).getTime()) result = false;else if (new Date(e.startTime).getTime() < new Date(reservation.startTime).getTime() && new Date(reservation.startTime).getTime() < new Date(e.endTime).getTime()) result = false;
+              }
+            } catch (err) {
+              _iterator4.e(err);
+            } finally {
+              _iterator4.f();
+            }
+
+            if (!(sharedResult == false)) {
+              _context10.next = 18;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "해당 주차장은 오늘 공유가 종료되었습니다."
+            });
+            _context10.next = 33;
+            break;
+
+          case 18:
+            if (!((0, _dateController.possibleTimeCheck)(sharedLocation.possibleStartTime, sharedLocation.possibleEndTime, reservation.startTime, reservation.endTime) == false)) {
+              _context10.next = 22;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "가능한 시간대가 아닙니다."
+            });
+            _context10.next = 33;
+            break;
+
+          case 22:
+            if (!(result == false)) {
+              _context10.next = 26;
+              break;
+            }
+
+            res.json({
+              result: "fail",
+              message: "해당 시간은 예약이 되어 있습니다."
+            });
+            _context10.next = 33;
+            break;
+
+          case 26:
+            _context10.next = 28;
+            return _Reservation["default"].create(reservation);
+
+          case 28:
+            createdReservation = _context10.sent;
+            createdReservation.save(function (err) {
+              if (err) {
+                res.json({
+                  result: "fail",
+                  message: "예약에 소유자 등록 실패"
+                });
+              }
+            });
+            sharedLocation.reservationList.push(createdReservation._id);
+            sharedLocation.save(function (err) {
+              if (err) res.json({
+                result: "fail",
+                message: "배정지 예약 리스트 등록 실패"
+              });
+            });
+            res.json({
+              result: "success",
+              message: "예약 완료 되었습니다."
+            });
+
+          case 33:
+            _context10.next = 39;
+            break;
+
+          case 35:
+            _context10.prev = 35;
+            _context10.t0 = _context10["catch"](2);
+            console.log(_context10.t0);
+            res.json({
+              result: "fail",
+              message: "사용자 등록 DB ERROR"
+            });
+
+          case 39:
+          case "end":
+            return _context10.stop();
+        }
+      }
+    }, _callee10, null, [[2, 35]]);
+  }));
+
+  return function notUserReservationEnroll(_x19, _x20) {
+    return _ref10.apply(this, arguments);
+  };
+}();
+
+var changeLocation = /*#__PURE__*/function () {
+  var _ref11 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(req, res) {
+    var _id, reservation, lat, _long, locations, result, _iterator5, _step5, e, possibleResult, _iterator6, _step6, i;
+
+    return _regenerator["default"].wrap(function _callee11$(_context11) {
+      while (1) {
+        switch (_context11.prev = _context11.next) {
+          case 0:
+            _id = req.body._id;
+            _context11.prev = 1;
+            _context11.next = 4;
+            return _Reservation["default"].findOne({
+              _id: _id
+            }).populate({
+              path: "location",
+              select: "latitude longitude"
+            });
+
+          case 4:
+            reservation = _context11.sent;
+
+            if (!reservation) {
+              res.json({
+                result: "fail",
+                message: "존재하지 않는 예약입니다."
+              });
+            }
+
+            lat = +reservation.location.latitude;
+            _long = +reservation.location.longitude;
+            _context11.next = 10;
+            return _SharedLocation["default"].find({});
+
+          case 10:
+            locations = _context11.sent;
+            locations.sort(function (a, b) {
+              return Math.pow(+a.latitude - lat, 2) + Math.pow(+a.longitude - _long, 2) - (Math.pow(+b.latitude - lat, 2) + Math.pow(+b.longitude - _long, 2));
+            }); //자기 예약 뺴고
+
+            locations.shift();
+            result = true;
+            _iterator5 = _createForOfIteratorHelper(locations);
+            _context11.prev = 15;
+
+            _iterator5.s();
+
+          case 17:
+            if ((_step5 = _iterator5.n()).done) {
+              _context11.next = 30;
+              break;
+            }
+
+            e = _step5.value;
+            possibleResult = true;
+            if ((0, _dateController.possibleTimeCheck)(e.possibleStartTime, e.possibleEndTime, reservation.startTime, reservation.endTime) == false) possibleResult = false;
+            if (e.timeState[(0, _dateController.changeDay)(reservation.startTime.slice(0, 3))] == 0 || e.timeState[(0, _dateController.changeDay)(reservation.endTime.slice(0, 3))] == 0) possibleResult = false;
+            _iterator6 = _createForOfIteratorHelper(e.reservationList);
+
+            try {
+              for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
+                i = _step6.value;
+                if (new Date(i.startTime).getTime() < new Date(reservation.endTime).getTime() && new Date(reservation.endTime).getTime() < new Date(i.endTime).getTime()) possibleResult = false;else if (new Date(i.startTime).getTime() < new Date(reservation.startTime).getTime() && new Date(reservation.startTime).getTime() < new Date(i.endTime).getTime()) possibleResult = false;
+              }
+            } catch (err) {
+              _iterator6.e(err);
+            } finally {
+              _iterator6.f();
+            }
+
+            result = possibleResult;
+
+            if (!(result == true)) {
+              _context11.next = 28;
+              break;
+            }
+
+            res.json({
+              result: "success",
+              _id: e._id,
+              parkingInfo: e.parkingInfo,
+              location: e.location,
+              latitude: e.latitude,
+              longitude: e.longitude
+            });
+            return _context11.abrupt("break", 30);
+
+          case 28:
+            _context11.next = 17;
+            break;
+
+          case 30:
+            _context11.next = 35;
+            break;
+
+          case 32:
+            _context11.prev = 32;
+            _context11.t0 = _context11["catch"](15);
+
+            _iterator5.e(_context11.t0);
+
+          case 35:
+            _context11.prev = 35;
+
+            _iterator5.f();
+
+            return _context11.finish(35);
+
+          case 38:
+            if (result == false) res.json({
+              result: "fail",
+              message: "주변에 바꿔드릴 장소가 없습니다. 죄송합니다"
+            });
+            _context11.next = 45;
+            break;
+
+          case 41:
+            _context11.prev = 41;
+            _context11.t1 = _context11["catch"](1);
+            console.log(_context11.t1);
+            res.json({
+              result: "fail",
+              message: "DB 오류 "
+            });
+
+          case 45:
+          case "end":
+            return _context11.stop();
+        }
+      }
+    }, _callee11, null, [[1, 41], [15, 32, 35, 38]]);
+  }));
+
+  return function changeLocation(_x21, _x22) {
+    return _ref11.apply(this, arguments);
+  };
+}();
+
+var changeReservation = /*#__PURE__*/function () {
+  var _ref12 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee12(req, res) {
+    var _req$body5, _id, locationId, reservation, location, changedLocation;
+
+    return _regenerator["default"].wrap(function _callee12$(_context12) {
+      while (1) {
+        switch (_context12.prev = _context12.next) {
+          case 0:
+            _req$body5 = req.body, _id = _req$body5._id, locationId = _req$body5.locationId;
+            _context12.next = 3;
+            return _Reservation["default"].findOne({
+              _id: reservationId
+            });
+
+          case 3:
+            _context12.next = 5;
+            return _context12.sent.populate({
+              path: "location",
+              select: "_id"
+            });
+
+          case 5:
+            reservation = _context12.sent;
+
+            if (!reservation.client) {
+              _context12.next = 27;
+              break;
+            }
+
+            _context12.prev = 7;
+            _context12.next = 10;
+            return _SharedLocation["default"].findOne({
+              _id: reservation.location._id
+            });
+
+          case 10:
+            location = _context12.sent;
+            _context12.next = 13;
+            return _SharedLocation["default"].findOne({
+              _id: locationId
+            });
+
+          case 13:
+            changedLocation = _context12.sent;
+            reservation.location = locationId;
+            location.reservationList.pull(reservationId);
+            changedLocation.reservationList.push(reservationId);
+            reservation.save(function (e) {
+              return res.json({
+                result: "fail",
+                message: "예약 위치 변경 실패"
+              });
+            });
+            location.save(function (e) {
+              return res.json({
+                result: "fail",
+                message: "기존 위치에 예약 삭제"
+              });
+            });
+            changedLocation.save(function (e) {
+              return res.json({
+                result: "fail",
+                message: "변경할 위치에 예약 등록 실패"
+              });
+            });
+            _context12.next = 25;
+            break;
+
+          case 22:
+            _context12.prev = 22;
+            _context12.t0 = _context12["catch"](7);
+            console.log(_context12.t0);
+
+          case 25:
+            _context12.next = 27;
+            break;
+
+          case 27:
+          case "end":
+            return _context12.stop();
+        }
+      }
+    }, _callee12, null, [[7, 22]]);
+  }));
+
+  return function changeReservation(_x23, _x24) {
+    return _ref12.apply(this, arguments);
+  };
+}();
+
 apiRouter.post("/auth", getUserInfo);
 apiRouter.post("/sharedLocation/enroll", _multerMiddleware.uploadImage, sharedLocationEnroll);
 apiRouter.post("/reservation/enroll", reservationEnroll);
+apiRouter.post("/reservation/notUser/enroll", notUserReservationEnroll);
 apiRouter.post("/allSharedLocation", allSharedLocation);
 apiRouter.get("/reserveList", sharedLocationReserveList);
 apiRouter.get("/getAddress", getAddress);
@@ -880,5 +1300,7 @@ apiRouter.get("/locationInfo", locationInfo);
 apiRouter.post("/shareInfo", shareInfo);
 apiRouter.post("/sharingSwitch", sharingSwitch);
 apiRouter.post("/sendShareInfo", updateShareInfo);
+apiRouter.post("/illegal/change", changeLocation);
+apiRouter.post("/illegal/changeReservation", changeReservation);
 var _default = apiRouter;
 exports["default"] = _default;
