@@ -243,13 +243,30 @@ const adminEditPoint = async (req, res) => {
   }
 };
 const adminGetStatistics = async (req, res) => {
+  console.log(req);
+  const {
+    body: { region },
+  } = req;
   try {
-    const purposes = await VisitPurpose.find();
+    const purposes = await VisitPurpose.find().populate({
+      path: "location",
+      select: "location",
+    });
+
+    let regionPurposes = [];
+    if (region !== "전체") {
+      regionPurposes = purposes.filter(
+        (e) => e.location.location.slice(13, 16) === region
+      );
+    } else {
+      regionPurposes = purposes;
+    }
+
     let data = ["외식", "쇼핑", "출장", "친구", "의료", "여행", "기타"];
     let subData = [];
     let dataCount = [];
     for (var i of data) {
-      subData = purposes.filter((e) => e.category.indexOf(i) != -1);
+      subData = regionPurposes.filter((e) => e.category.indexOf(i) != -1);
       console.log(subData.length);
       dataCount.push(subData.length);
     }

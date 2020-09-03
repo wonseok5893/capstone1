@@ -691,25 +691,40 @@ var adminEditPoint = /*#__PURE__*/function () {
 
 var adminGetStatistics = /*#__PURE__*/function () {
   var _ref11 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee11(req, res) {
-    var purposes, data, subData, dataCount, _i, _data, i;
+    var region, purposes, regionPurposes, data, subData, dataCount, _i, _data, i;
 
     return _regenerator["default"].wrap(function _callee11$(_context11) {
       while (1) {
         switch (_context11.prev = _context11.next) {
           case 0:
-            _context11.prev = 0;
-            _context11.next = 3;
-            return _VisitPurpose["default"].find();
+            console.log(req);
+            region = req.body.region;
+            _context11.prev = 2;
+            _context11.next = 5;
+            return _VisitPurpose["default"].find().populate({
+              path: "location",
+              select: "location"
+            });
 
-          case 3:
+          case 5:
             purposes = _context11.sent;
+            regionPurposes = [];
+
+            if (region !== "전체") {
+              regionPurposes = purposes.filter(function (e) {
+                return e.location.location.slice(13, 16) === region;
+              });
+            } else {
+              regionPurposes = purposes;
+            }
+
             data = ["외식", "쇼핑", "출장", "친구", "의료", "여행", "기타"];
             subData = [];
             dataCount = [];
 
             for (_i = 0, _data = data; _i < _data.length; _i++) {
               i = _data[_i];
-              subData = purposes.filter(function (e) {
+              subData = regionPurposes.filter(function (e) {
                 return e.category.indexOf(i) != -1;
               });
               console.log(subData.length);
@@ -719,24 +734,24 @@ var adminGetStatistics = /*#__PURE__*/function () {
             res.json({
               data: dataCount
             });
-            _context11.next = 15;
+            _context11.next = 19;
             break;
 
-          case 11:
-            _context11.prev = 11;
-            _context11.t0 = _context11["catch"](0);
+          case 15:
+            _context11.prev = 15;
+            _context11.t0 = _context11["catch"](2);
             console.log(_context11.t0);
             res.json({
               result: "fail",
               message: "db오류"
             });
 
-          case 15:
+          case 19:
           case "end":
             return _context11.stop();
         }
       }
-    }, _callee11, null, [[0, 11]]);
+    }, _callee11, null, [[2, 15]]);
   }));
 
   return function adminGetStatistics(_x21, _x22) {

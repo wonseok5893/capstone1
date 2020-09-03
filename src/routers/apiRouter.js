@@ -74,6 +74,7 @@ const sharedLocationEnroll = async (req, res) => {
       latitude,
       longitude,
       parkingInfo,
+      description,
     },
   } = req;
   if (!req.file) {
@@ -112,6 +113,7 @@ const sharedLocationEnroll = async (req, res) => {
             longitude,
             parkingInfo,
             timeState: [0, 0, 0, 0, 0, 0, 0],
+            description,
           });
 
           await SharedLocation.create(sharedLocation);
@@ -252,7 +254,7 @@ const allSharedLocation = async (req, res) => {
   console.log(req.headers["x-forwarded-for"], req.connection.remoteAddress);
   try {
     const allSharedLocations = await SharedLocation.find({ state: 1 })
-      .select("location latitude longitude parkingInfo timeState")
+      .select("location latitude longitude parkingInfo timeState description")
       .populate({
         path: "owner",
         select: "userId userPhone",
@@ -613,6 +615,7 @@ const changeLocation = async (req, res) => {
           location: e.location,
           latitude: e.latitude,
           longitude: e.longitude,
+          description: e.description,
         });
         break;
       }

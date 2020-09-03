@@ -16,7 +16,7 @@ _dotenv["default"].config(); // local 1 2 cloud
 //cloud MONGODB_URL
 
 
-_mongoose["default"].connect(process.env.MONGODB_URL, {
+_mongoose["default"].connect(process.env.MONGODB_LOCAL_URL, {
   useNewUrlParser: true,
   useFindAndModify: false
 });

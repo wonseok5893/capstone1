@@ -8,9 +8,9 @@ import globalRouter from "./routers/globalRouter";
 import apiRouter from "./routers/apiRouter";
 import userRouter from "./routers/userRouter";
 import dotenv from "dotenv";
-import multerMiddleware from "./multerMiddleware";
+
 import { jwtMiddleware } from "./jwtMiddleware";
-import multer from "multer";
+
 dotenv.config();
 
 const app = express();
@@ -24,6 +24,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan("dev"));
+app.use("/uploads/images", express.static("./uploads/images/"));
 app.set("jwt-secret", process.env.SECRET);
 
 app.use(jwtMiddleware);

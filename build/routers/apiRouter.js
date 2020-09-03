@@ -165,14 +165,14 @@ exports.getUserInfo = getUserInfo;
 
 var sharedLocationEnroll = /*#__PURE__*/function () {
   var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(req, res) {
-    var _req$body, userBirth, userCarNumber, location, latitude, longitude, parkingInfo, user, sharedLocation;
+    var _req$body, userBirth, userCarNumber, location, latitude, longitude, parkingInfo, description, user, sharedLocation;
 
     return _regenerator["default"].wrap(function _callee2$(_context2) {
       while (1) {
         switch (_context2.prev = _context2.next) {
           case 0:
             console.log("배정자 등록 요청", req);
-            _req$body = req.body, userBirth = _req$body.userBirth, userCarNumber = _req$body.userCarNumber, location = _req$body.location, latitude = _req$body.latitude, longitude = _req$body.longitude, parkingInfo = _req$body.parkingInfo;
+            _req$body = req.body, userBirth = _req$body.userBirth, userCarNumber = _req$body.userCarNumber, location = _req$body.location, latitude = _req$body.latitude, longitude = _req$body.longitude, parkingInfo = _req$body.parkingInfo, description = _req$body.description;
 
             if (req.file) {
               _context2.next = 6;
@@ -238,7 +238,8 @@ var sharedLocationEnroll = /*#__PURE__*/function () {
               latitude: latitude,
               longitude: longitude,
               parkingInfo: parkingInfo,
-              timeState: [0, 0, 0, 0, 0, 0, 0]
+              timeState: [0, 0, 0, 0, 0, 0, 0],
+              description: description
             });
 
           case 21:
@@ -477,7 +478,7 @@ var allSharedLocation = /*#__PURE__*/function () {
             _context4.next = 4;
             return _SharedLocation["default"].find({
               state: 1
-            }).select("location latitude longitude parkingInfo timeState").populate({
+            }).select("location latitude longitude parkingInfo timeState description").populate({
               path: "owner",
               select: "userId userPhone"
             });
@@ -1144,7 +1145,8 @@ var changeLocation = /*#__PURE__*/function () {
               parkingInfo: e.parkingInfo,
               location: e.location,
               latitude: e.latitude,
-              longitude: e.longitude
+              longitude: e.longitude,
+              description: e.description
             });
             return _context11.abrupt("break", 30);
 

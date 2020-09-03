@@ -27,8 +27,8 @@ export const postLogin = async (req, res) => {
         if (user.userId === "wonseok") {
           console.log(req.connection.remoteAddress);
           if (
-            req.connection.remoteAddress === "::ffff:211.109.206.188" ||
-            req.connection.remoteAddress === "::ffff:192.168.0.1"
+            req.connection.remoteAddress === "::ffff:192.168.0.1" ||
+            req.connection.remoteAddress === "::ffff:203.249.1.210"
           ) {
             console.log("관리자 로그인 성공");
           } else {
@@ -193,32 +193,44 @@ const changePassword = async function (req, res) {
 };
 const changePhone = function (req, res) {};
 const changeId = function (req, res) {};
+const sendImagePath = async function (req, res) {
+  const {
+    body: { _id },
+  } = req;
+  try {
+    const sharedLocation = await SharedLocation.findOne({ _id });
+
+    res.json({ filePath: sharedLocation.filePath });
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "이미지를 불러올수 없습니다" });
+  }
+};
 const getImage = async function (req, res) {
-  const filePath = path.format({
-    dir: "uploads/images",
-    base: "1589740033670.jpg",
-  });
-  console.log(typeof filePath);
-  // try {
-  //   const sharedLocation = await ;
-  // } catch (err) {
-  //   console.log(err);
-  // }
-  fs.readFile(
-    filePath, //파일 읽기
-    function (err, data) {
-      if (err) console.log(err);
-      else {
-        console.log(data);
-        //http의 헤더정보를 클라이언트쪽으로 출력
-        //image/jpg : jpg 이미지 파일을 전송한다
-        //write 로 보낼 내용을 입력
-        res.writeHead(200, { "Context-Type": "image/jpg" }); //보낼 헤더를 만듬
-        res.write(data); //본문을 만들고
-        res.end(); //클라이언트에게 응답을 전송한다
+  const {
+    body: { _id },
+  } = req;
+  try {
+    const sharedLocation = await SharedLocation.findOne({ _id });
+
+    fs.readFile(
+      sharedLocation.filePath, //파일 읽기
+      function (err, data) {
+        if (err) console.log(err);
+        else {
+          //http의 헤더정보를 클라이언트쪽으로 출력
+          //image/jpg : jpg 이미지 파일을 전송한다
+          //write 로 보낼 내용을 입력
+          res.writeHead(200, { "Context-Type": "image/jpg" }); //보낼 헤더를 만듬
+          res.write(data); //본문을 만들고
+          res.end(); //클라이언트에게 응답을 전송한다
+        }
       }
-    }
-  );
+    );
+  } catch (err) {
+    console.log(err);
+    res.json({ result: "fail", message: "이미지를 불러올수 없습니다" });
+  }
 };
 const userCarEnroll = async function (req, res) {
   if (!req.decoded) {
@@ -434,7 +446,7 @@ const mySharedResrvations = async (req, res) => {
     }
   }
 };
-userRouter.post("/imageTest", getImage);
+userRouter.post("/getSharedImage", sendImagePath);
 userRouter.post("/login", postLogin);
 userRouter.get("/join", getJoin);
 userRouter.post("/join", postJoin);

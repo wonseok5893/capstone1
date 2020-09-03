@@ -27,11 +27,7 @@ var _userRouter = _interopRequireDefault(require("./routers/userRouter"));
 
 var _dotenv = _interopRequireDefault(require("dotenv"));
 
-var _multerMiddleware = _interopRequireDefault(require("./multerMiddleware"));
-
 var _jwtMiddleware = require("./jwtMiddleware");
-
-var _multer = _interopRequireDefault(require("multer"));
 
 _dotenv["default"].config();
 
@@ -47,6 +43,7 @@ app.use(_bodyParser["default"].urlencoded({
 }));
 app.use((0, _cookieParser["default"])());
 app.use((0, _morgan["default"])("dev"));
+app.use("/uploads/images", _express["default"]["static"]("./uploads/images/"));
 app.set("jwt-secret", process.env.SECRET);
 app.use(_jwtMiddleware.jwtMiddleware);
 app.use("/", _globalRouter["default"]);

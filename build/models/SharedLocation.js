@@ -71,6 +71,9 @@ var SharedLocationSchema = new _mongoose["default"].Schema({
   filePath: {
     type: String
   },
+  description: {
+    type: String
+  },
   parkingInfo: {
     type: String,
     required: true

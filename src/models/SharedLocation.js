@@ -17,11 +17,13 @@ const SharedLocationSchema = new mongoose.Schema({
   currentState: { type: Number, default: 0, enum: [-1, 0, 1] }, //공유중 0 //공유 안 하는중 -1// 이용중 1
   timeState: [{ type: Number, default: 0, enum: [0, 1] }], //일 월 화 수 목 금 토
   filePath: { type: String },
+  description: { type: String },
   parkingInfo: { type: String, required: true },
   enrollTime: {
     type: String,
     default: moment().format("YYYY년 MM월 DD일 HH:mm:ss"),
   },
+
   change: { type: Number, default: 0, enum: [0, 1] },
 });
 
